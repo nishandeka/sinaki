@@ -191,6 +191,19 @@
   font-size: 0.65rem;
   opacity: 0.7;
   align-self: flex-end;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ticks {
+  font-size: 0.75rem;
+  display: inline-flex;
+  font-weight: bold;
+}
+
+.ticks[data-status="read"] {
+  color: #34b7f1; /* WhatsApp active blue ticks */
 }
 
 .sent .time {
@@ -199,6 +212,20 @@
 
 .received .time {
   color: var(--on-surface-variant);
+}
+
+.typingStatus {
+  font-size: 0.75rem;
+  color: var(--tertiary);
+  font-style: italic;
+  font-weight: 600;
+  animation: pulseTyping 1.5s infinite ease-in-out;
+}
+
+@keyframes pulseTyping {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
 }
 
 .composer {

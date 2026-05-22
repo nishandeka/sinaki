@@ -126,12 +126,41 @@
   max-width: 320px;
 }
 
+.lastMessage.unreadText {
+  color: var(--on-background);
+  font-weight: 600;
+}
+
 .meta {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  justify-content: center;
   gap: var(--space-xs);
+  min-width: 70px;
 }
+
+.time {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.75rem;
+  color: var(--on-surface-variant);
+}
+
+.unreadBadge {
+  background-color: var(--tertiary); /* Tea Garden Green for unread indicators */
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  box-shadow: 0 2px 5px rgba(74, 124, 89, 0.2);
+}
+
 
 .arrow {
   color: var(--primary);

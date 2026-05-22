@@ -15,6 +15,7 @@ interface Message {
   created_at: string;
   message_type?: string;
   media_url?: string;
+  status?: 'sent' | 'delivered' | 'read';
 }
 
 interface Partner {
@@ -133,6 +134,43 @@ const playDeclineTone = () => {
   } catch (e) {}
 };
 
+const playChimeSound = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const audioCtx = new AudioContextClass();
+    
+    const playTone = (freq: number, start: number, duration: number) => {
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime + start);
+      gainNode.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + start + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + start + duration);
+      
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      osc.start(audioCtx.currentTime + start);
+      osc.stop(audioCtx.currentTime + start + duration);
+    };
+    
+    // Play sweet "ding-dong" chime
+    playTone(880, 0, 0.3); // A5
+    playTone(1320, 0.1, 0.4); // E6
+    
+    setTimeout(() => {
+      audioCtx.close().catch(() => {});
+    }, 1200);
+  } catch (e) {
+    console.error("Failed to play chime sound:", e);
+  }
+};
+
 const getUserMediaWithTimeout = async (constraints: MediaStreamConstraints, timeoutMs = 8000): Promise<MediaStream> => {
   if (typeof window === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new DOMException("Media devices not supported", "NotSupportedError");
@@ -166,6 +204,7 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
+  const [isPartnerTyping, setIsPartnerTyping] = useState(false);
 
   // Call states
   const [callState, setCallState] = useState<'idle' | 'outgoing' | 'connecting' | 'active' | 'ended'>('idle');
@@ -187,6 +226,69 @@ export default function ChatPage() {
   const ringbackCleanupRef = useRef<(() => void) | null>(null);
   const callTimeoutRef = useRef<any>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+
+  // Real-time Chat Refs
+  const chatChannelRef = useRef<any>(null);
+  const typingTimeoutRef = useRef<any>(null);
+  const localTypingRef = useRef<boolean>(false);
+
+  const markMessagesAsRead = async (convId: string, userId: string, partnerId: string) => {
+    try {
+      const { error: msgError } = await supabase
+        .from('messages')
+        .update({ status: 'read', read_at: new Date().toISOString() })
+        .eq('conversation_id', convId)
+        .eq('sender_id', partnerId)
+        .neq('status', 'read');
+
+      if (msgError) console.error("Error marking messages as read:", msgError);
+
+      const { data: convData } = await supabase
+        .from('conversations')
+        .select('user_1_id, user_2_id')
+        .eq('id', convId)
+        .single();
+        
+      if (convData) {
+        const updateField = convData.user_1_id === userId ? { user_1_unread_count: 0 } : { user_2_unread_count: 0 };
+        const { error: convError } = await supabase
+          .from('conversations')
+          .update(updateField)
+          .eq('id', convId);
+        if (convError) console.error("Error clearing conversation unread count:", convError);
+      }
+    } catch (err) {
+      console.error("Failed to mark messages as read:", err);
+    }
+  };
+
+  const handleTyping = () => {
+    if (!chatChannelRef.current || !currentUser || !partner) return;
+    
+    if (!localTypingRef.current) {
+      localTypingRef.current = true;
+      chatChannelRef.current.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { userId: currentUser.id, isTyping: true }
+      });
+    }
+    
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      localTypingRef.current = false;
+      if (chatChannelRef.current) {
+        chatChannelRef.current.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: { userId: currentUser.id, isTyping: false }
+        });
+      }
+    }, 2000);
+  };
 
   useEffect(() => {
     localStreamRef.current = localStream;
@@ -256,7 +358,6 @@ export default function ChatPage() {
 
   useEffect(() => {
     let active = true;
-    let channel: any = null;
 
     const setupChat = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -288,9 +389,11 @@ export default function ChatPage() {
 
         if (!active) return;
 
+        let partnerId = '';
         if (matchData) {
           const p = matchData.user_1_id === user.id ? matchData.user2 : matchData.user1;
           setPartner(p);
+          partnerId = p.id;
         }
 
         // Fetch corresponding conversation
@@ -316,23 +419,58 @@ export default function ChatPage() {
           if (!active) return;
           setMessages(messageData || []);
 
-          // Subscribe to new messages for this conversation
-          const channelName = `conv_${convId}`;
-          await removeExistingChannel(channelName);
+          // Subscribe to message changes (INSERT & UPDATE) & typing broadcast events
+          const chatChannelName = `chat_room_${convId}`;
+          await removeExistingChannel(chatChannelName);
 
           if (!active) return;
 
-          channel = supabase
-            .channel(channelName)
+          if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+          }
+          localTypingRef.current = false;
+          setIsPartnerTyping(false);
+
+          const channelInstance = supabase
+            .channel(chatChannelName)
             .on('postgres_changes', { 
               event: 'INSERT', 
               schema: 'public', 
               table: 'messages',
               filter: `conversation_id=eq.${convId}`
             }, (payload) => {
-              setMessages(prev => [...prev, payload.new as Message]);
+              const newMsg = payload.new as Message;
+              
+              setMessages(prev => {
+                if (prev.some(m => m.id === newMsg.id)) return prev;
+                return [...prev, newMsg];
+              });
+
+              if (newMsg.sender_id !== user.id) {
+                playChimeSound();
+                markMessagesAsRead(convId, user.id, newMsg.sender_id);
+              }
             })
-            .subscribe();
+            .on('postgres_changes', {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'messages',
+              filter: `conversation_id=eq.${convId}`
+            }, (payload) => {
+              const updatedMsg = payload.new as Message;
+              setMessages(prev => prev.map(m => m.id === updatedMsg.id ? { ...m, ...updatedMsg } : m));
+            })
+            .on('broadcast', { event: 'typing' }, ({ payload }) => {
+              if (payload.userId === partnerId) {
+                setIsPartnerTyping(payload.isTyping);
+              }
+            });
+
+          chatChannelRef.current = channelInstance;
+          await channelInstance.subscribe();
+
+          // Mark messages as read upon opening the chat
+          markMessagesAsRead(convId, user.id, partnerId);
         }
       }
     };
@@ -341,8 +479,12 @@ export default function ChatPage() {
 
     return () => {
       active = false;
-      if (channel) {
-        supabase.removeChannel(channel);
+      if (chatChannelRef.current) {
+        supabase.removeChannel(chatChannelRef.current);
+        chatChannelRef.current = null;
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
       }
     };
   }, [matchId]);
@@ -800,6 +942,20 @@ export default function ChatPage() {
     e.preventDefault();
     if (!input.trim() || !currentUser || !conversationId) return;
 
+    // Reset local typing indicator immediately upon sending
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    if (localTypingRef.current && chatChannelRef.current) {
+      localTypingRef.current = false;
+      chatChannelRef.current.send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { userId: currentUser.id, isTyping: false }
+      });
+    }
+
     const newMessage = {
       conversation_id: conversationId,
       sender_id: currentUser.id,
@@ -842,10 +998,14 @@ export default function ChatPage() {
               </div>
               <div className={styles.headerText}>
                 <h3 className={styles.partnerName}>{partner?.full_name || 'Loading...'}</h3>
-                <span className={styles.status}>
-                  <span className={styles.statusDot}></span>
-                  Online
-                </span>
+                {isPartnerTyping ? (
+                  <span className={styles.typingStatus}>typing...</span>
+                ) : (
+                  <span className={styles.status}>
+                    <span className={styles.statusDot}></span>
+                    Online
+                  </span>
+                )}
               </div>
             </div>
             <div className={styles.headerActions}>
@@ -871,7 +1031,17 @@ export default function ChatPage() {
                   ) : (
                     m.content
                   )}
-                  <span className={styles.time}>{new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className={styles.time}>
+                    {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {m.sender_id === currentUser?.id && (
+                      <span 
+                        className={styles.ticks} 
+                        data-status={m.status || 'sent'}
+                      >
+                        {m.status === 'read' ? ' ✓✓' : ' ✓'}
+                      </span>
+                    )}
+                  </span>
                 </div>
               </div>
             ))}
@@ -898,7 +1068,10 @@ export default function ChatPage() {
               type="text" 
               placeholder="Type a romantic message..." 
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                handleTyping();
+              }}
               className={styles.composerInput}
               disabled={uploadingPhoto}
             />
