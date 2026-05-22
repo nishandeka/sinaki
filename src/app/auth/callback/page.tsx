@@ -20,6 +20,15 @@ export default function AuthCallbackPage() {
 
       const user = session.user;
 
+      // Check query params for custom redirect (recovery flow)
+      const searchParams = new URLSearchParams(window.location.search);
+      const next = searchParams.get('next');
+
+      if (next === '/reset-password') {
+        router.replace('/reset-password');
+        return;
+      }
+
       // Check if this user already has a profile (returning user)
       const { data: profile } = await supabase
         .from('profiles')
