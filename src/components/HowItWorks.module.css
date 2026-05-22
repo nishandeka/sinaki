@@ -1,0 +1,110 @@
+.section {
+  padding: 120px 0;
+  background-color: var(--surface-variant); /* Cream variation #FFF3E4 */
+  position: relative;
+  z-index: 2;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 var(--space-xl);
+}
+
+.mainTitle {
+  font-family: var(--font-playfair), serif;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 850;
+  color: var(--on-background);
+  margin-bottom: var(--space-3xl);
+  text-align: left;
+}
+
+.stepsList {
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+}
+
+.stepRow {
+  display: flex;
+  align-items: center;
+  gap: 80px;
+}
+
+.flipped {
+  flex-direction: row-reverse;
+}
+
+.textContent {
+  flex: 1.2;
+}
+
+.stepNum {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--secondary); /* Muga Gold */
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-xs);
+}
+
+.stepTitle {
+  font-family: var(--font-playfair), serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  font-weight: 700;
+  color: var(--on-background);
+  margin-bottom: var(--space-md);
+  line-height: 1.2;
+}
+
+.stepDesc {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--on-surface-variant);
+}
+
+.illustrationWrapper {
+  flex: 0.8;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 250px;
+  padding: var(--space-md);
+}
+
+.svg {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  filter: drop-shadow(0 8px 16px rgba(184, 134, 11, 0.05));
+  transition: transform 0.4s ease;
+}
+
+.stepRow:hover .svg {
+  transform: scale(1.03) rotate(1deg);
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 80px 0;
+  }
+  
+  .mainTitle {
+    text-align: center;
+    margin-bottom: var(--space-2xl);
+  }
+  
+  .stepRow, .flipped {
+    flex-direction: column;
+    gap: var(--space-xl);
+    text-align: center;
+  }
+  
+  .illustrationWrapper {
+    width: 100%;
+    min-width: unset;
+  }
+}

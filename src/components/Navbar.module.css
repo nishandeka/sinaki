@@ -1,0 +1,90 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  transition: all 0.4s ease;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 var(--space-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-family: var(--font-playfair);
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  letter-spacing: -0.04em;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+}
+
+.loginLink {
+  font-family: var(--font-inter);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  position: relative;
+}
+
+.loginLink::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  transition: width 0.3s ease;
+  border-radius: 2px;
+}
+
+.loginLink:hover {
+  color: var(--on-background);
+}
+
+.loginLink:hover::after {
+  width: 100%;
+}
+
+.cta {
+  background: rgba(192, 57, 43, 0.08); /* Gamosa Red with opacity */
+  color: var(--primary);
+  border: 1px solid rgba(192, 57, 43, 0.25);
+  padding: 10px 24px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-inter);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.cta:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), var(--glow-primary);
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}

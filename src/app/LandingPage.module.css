@@ -1,0 +1,275 @@
+.main {
+  position: relative;
+  z-index: 1;
+}
+
+.safety {
+  padding: 100px 0;
+  background-color: var(--background);
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 var(--space-xl);
+}
+
+.safetyCard {
+  padding: var(--space-3xl) var(--space-xl);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--outline);
+  background-color: var(--surface-variant); /* Shift background slightly */
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.safetyCard h2 {
+  font-family: var(--font-playfair), serif;
+  margin-bottom: var(--space-lg);
+}
+
+.safetyList {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+  margin: var(--space-2xl) 0;
+  text-align: left;
+}
+
+.safetyList li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-family: var(--font-inter), sans-serif;
+  font-size: 1.05rem;
+  color: var(--on-surface-variant);
+  background: var(--surface);
+  padding: 16px 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--outline);
+  box-shadow: var(--shadow-sm);
+}
+
+.safetyList li::before {
+  content: "🛡️";
+  font-size: 1.2rem;
+}
+
+.safetyLinks {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2xl);
+  margin-top: var(--space-xl);
+}
+
+.safetyLinks a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  font-family: var(--font-inter), sans-serif;
+  transition: all 0.3s ease;
+}
+
+.safetyLinks a:hover {
+  color: var(--secondary);
+}
+
+.testimonials {
+  padding: 120px 0;
+  background-color: var(--background);
+}
+
+.testimonialsTitle {
+  font-family: var(--font-playfair), serif;
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  text-align: left;
+  margin-bottom: var(--space-3xl);
+  font-weight: 800;
+}
+
+.testimonialGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* WhatsApp message style card */
+.testimonialCard {
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) 0px; /* Chat bubble corner */
+  padding: var(--space-lg) var(--space-xl);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  max-width: 90%;
+  align-self: flex-start;
+  transition: transform 0.3s ease;
+}
+
+.testimonialCardFlipped {
+  align-self: flex-end;
+  border-radius: var(--radius-lg) var(--radius-lg) 0px var(--radius-lg);
+  background: #FFFDF5; /* Subtle gold tint bubble */
+  border-color: rgba(184, 134, 11, 0.2);
+}
+
+.testimonialText {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--on-surface-variant);
+  margin-bottom: var(--space-sm);
+}
+
+.testimonialMeta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 0.8rem;
+  color: #888888;
+}
+
+.author {
+  font-weight: 600;
+  color: var(--on-surface-variant);
+}
+
+.district {
+  color: var(--secondary);
+}
+
+.checkmark {
+  color: #34B7F1; /* WhatsApp blue checks */
+  font-weight: bold;
+}
+
+.faq {
+  padding: 100px 0;
+  background-color: var(--surface-variant); /* Shift background */
+}
+
+.faqTitle {
+  font-family: var(--font-playfair), serif;
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  margin-bottom: var(--space-3xl);
+  font-weight: 800;
+}
+
+.faqList {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.faqItem {
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.faqItem summary {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: var(--space-lg);
+  color: var(--on-background);
+  transition: all 0.3s ease;
+}
+
+.faqItem summary:hover {
+  color: var(--primary);
+  background-color: var(--surface-variant);
+}
+
+.faqItem p {
+  padding: 0 var(--space-lg) var(--space-lg) var(--space-lg);
+  color: var(--on-surface-variant);
+  line-height: 1.6;
+  font-family: var(--font-inter), sans-serif;
+}
+
+.footer {
+  padding: 80px 0 40px;
+  background: var(--surface);
+  border-top: 1px solid var(--outline);
+}
+
+.footerGrid {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 60px;
+}
+
+.footerLogo {
+  font-family: var(--font-playfair), serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: var(--space-xs);
+}
+
+.footerLinks {
+  display: flex;
+  gap: var(--space-2xl);
+}
+
+.footerLinks a {
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.95rem;
+  transition: color 0.3s ease;
+}
+
+.footerLinks a:hover {
+  color: var(--primary);
+}
+
+.footerBottom {
+  border-top: 1px solid var(--outline-variant);
+  padding-top: var(--space-xl);
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--on-surface-variant);
+  font-family: var(--font-inter), sans-serif;
+}
+
+.madeWithLove {
+  font-family: var(--font-handwritten), cursive;
+  font-size: 1.25rem;
+  color: var(--secondary);
+  margin-top: var(--space-xs);
+}
+
+@media (max-width: 768px) {
+  .safetyList {
+    grid-template-columns: 1fr;
+  }
+  
+  .testimonialGrid {
+    max-width: 100%;
+  }
+  
+  .testimonialCard {
+    max-width: 95%;
+  }
+  
+  .footerGrid {
+    flex-direction: column;
+    gap: var(--space-2xl);
+  }
+  
+  .footerLinks {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+}

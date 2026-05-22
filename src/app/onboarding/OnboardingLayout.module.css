@@ -1,0 +1,71 @@
+.wrapper {
+  min-height: 100vh;
+  background: var(--background);
+  padding: var(--space-2xl) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.progressContainer {
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: var(--space-3xl);
+}
+
+.progressBar {
+  height: 8px;
+  background: var(--outline-variant);
+  border-radius: var(--radius-full);
+  position: relative;
+  margin-bottom: var(--space-md);
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: var(--radius-full);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.petal {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5rem;
+  transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.stepLabels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 var(--space-sm);
+}
+
+.stepLabels span {
+  font-family: var(--font-plus-jakarta);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--outline);
+}
+
+.stepLabels .activeLabel {
+  color: var(--primary);
+}
+
+.content {
+  width: 100%;
+  max-width: 600px;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  padding: var(--space-3xl);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 600px) {
+  .content {
+    padding: var(--space-xl);
+  }
+}

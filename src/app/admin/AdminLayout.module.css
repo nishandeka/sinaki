@@ -1,0 +1,78 @@
+.wrapper {
+  display: flex;
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+.sidebar {
+  width: 260px;
+  background: #1e1e2d;
+  color: #a2a3b7;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+}
+
+.logo {
+  padding: var(--space-xl);
+  font-family: var(--font-noto-serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav {
+  padding: var(--space-lg) 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav a {
+  padding: var(--space-md) var(--space-xl);
+  color: #a2a3b7;
+  text-decoration: none;
+  font-family: var(--font-plus-jakarta);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.nav a:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.footer {
+  padding: var(--space-xl);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.75rem;
+}
+
+.footer a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+  display: block;
+  margin-top: var(--space-xs);
+}
+
+.main {
+  margin-left: 260px;
+  flex: 1;
+  padding: var(--space-2xl);
+}
+
+@media (max-width: 968px) {
+  .sidebar {
+    width: 80px;
+  }
+  .nav span {
+    display: none;
+  }
+  .main {
+    margin-left: 80px;
+  }
+}
