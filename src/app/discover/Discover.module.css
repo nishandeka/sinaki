@@ -518,3 +518,218 @@
     display: none;
   }
 }
+
+/* Card dragging override */
+.cardActive.dragging {
+  transition: none !important;
+  user-select: none;
+  cursor: grabbing;
+}
+
+/* Story/Carousel Progress Indicators */
+.storyIndicators {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+}
+
+.storyIndicator {
+  flex: 1;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.storyIndicatorActive {
+  background: white;
+}
+
+/* Ambient Floating Petals */
+.floatingContainer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floatingPetal {
+  position: absolute;
+  bottom: -20px;
+  background: rgba(230, 57, 70, 0.08); /* Soft translucent red */
+  color: rgba(230, 57, 70, 0.1);
+  font-size: 1.25rem;
+  border-radius: 50% 0 50% 50%; /* Petal shape */
+  width: 14px;
+  height: 14px;
+  transform: rotate(45deg);
+  animation: floatUp 16s linear infinite, sway 4s ease-in-out infinite alternate;
+}
+
+.floatingPetal:nth-child(even) {
+  background: rgba(245, 223, 160, 0.16); /* Translucent gold */
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-110vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes sway {
+  0% {
+    margin-left: 0px;
+  }
+  100% {
+    margin-left: 60px;
+  }
+}
+
+/* Filter Bar Widget */
+.filterBar {
+  grid-column: 1 / -1;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 12px var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  z-index: 5;
+}
+
+.filterHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.filterTitle {
+  font-family: var(--font-playfair);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filterIcon {
+  font-size: 0.875rem;
+  transition: transform 0.2s ease;
+  color: var(--primary);
+}
+
+.filterIconExpanded {
+  transform: rotate(180deg);
+}
+
+.filterBody {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px dashed var(--outline-variant);
+  animation: slideDown 0.25s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.filterLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filterSelect {
+  padding: 8px var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--outline-variant);
+  background: white;
+  font-family: var(--font-plus-jakarta);
+  font-size: 0.875rem;
+  color: var(--on-background);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.primaryBtn {
+  background: var(--primary);
+  color: white;
+  padding: var(--space-md);
+  border-radius: var(--radius-full);
+  font-family: var(--font-inter);
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+}
+
+.primaryBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg), var(--glow);
+  background: var(--primary-container);
+}
+
+.secondaryBtn {
+  background: transparent;
+  color: var(--on-surface-variant);
+  padding: var(--space-md);
+  border-radius: var(--radius-full);
+  font-family: var(--font-inter);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid var(--outline-variant);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.secondaryBtn:hover {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: var(--outline);
+}
+

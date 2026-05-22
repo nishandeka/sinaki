@@ -20,6 +20,23 @@ interface Profile {
   religion: string;
 }
 
+const ASSAMESE_DISTRICTS = [
+  "Kamrup Metropolitan", "Jorhat", "Dibrugarh", "Sonitpur", "Nagaon", 
+  "Cachar", "Barpeta", "Sivasagar", "Tinsukia", "Nalbari", 
+  "Golaghat", "Bongaigaon", "Lakhimpur", "Darrang", "Dhubri", 
+  "Goalpara", "Karimganj", "Hailakandi", "Morigaon", "Dhemaji", 
+  "Karbi Anglong", "Dima Hasao", "Kokrajhar", "Chirang", "Baksa", 
+  "Udalguri", "Majuli", "Charaideo", "Hojai", "South Salmara-Mankachar", 
+  "Biswanath", "Bajali", "Tamulpur"
+];
+
+const ASSAMESE_COMMUNITIES = [
+  "Ahom", "Bodo", "Chutia", "Dimasa", "Karbi", "Koch_Rajbongshi", 
+  "Mising", "Moran", "Motok", "Rabha", "Sonowal_Kachari", "Tea_Tribe", 
+  "Thengal_Kachari", "Tiwa", "Kalita", "Brahmin", "Kayastha", 
+  "Nath_Yogi", "Gariya", "Maria", "Bengali", "Marwari", "Nepali"
+];
+
 export default function DiscoverPage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [matches, setMatches] = useState<any[]>([]);
@@ -35,6 +52,130 @@ export default function DiscoverPage() {
   // Match celebration modal
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [matchedProfile, setMatchedProfile] = useState<Profile | null>(null);
+
+  // Photo active index
+  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
+
+  // Filter selections
+  const [selectedDistrict, setSelectedDistrict] = useState<string>('');
+  const [selectedCommunity, setSelectedCommunity] = useState<string>('');
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+
+  // Background floating petals
+  const [petals, setPetals] = useState<{ id: number; left: string; delay: string; duration: string }[]>([]);
+
+  // Drag physics states
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Initialize petals on mount
+  useEffect(() => {
+    const generated = Array.from({ length: 12 }).map((_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      delay: `${-Math.random() * 20}s`, // Negative delay so particles are pre-scattered
+      duration: `${12 + Math.random() * 8}s`,
+    }));
+    setPetals(generated);
+  }, []);
+
+  // Filter profiles client-side
+  const uniqueDistricts = Array.from(new Set([
+    ...ASSAMESE_DISTRICTS,
+    ...profiles.map(p => p.district).filter(Boolean)
+  ])).sort();
+
+  const uniqueCommunities = Array.from(new Set([
+    ...ASSAMESE_COMMUNITIES,
+    ...profiles.map(p => p.community).filter(Boolean)
+  ])).sort();
+
+  const filteredProfiles = profiles.filter(p => {
+    const matchDistrict = !selectedDistrict || p.district === selectedDistrict;
+    const matchCommunity = !selectedCommunity || p.community === selectedCommunity;
+    return matchDistrict && matchCommunity;
+  });
+
+  const currentProfile = filteredProfiles[currentIndex];
+
+  // Reset active photo and drag offsets when profile changes
+  useEffect(() => {
+    setActivePhotoIdx(0);
+    setDragOffset({ x: 0, y: 0 });
+    setIsDragging(false);
+    setDragStart(null);
+  }, [currentProfile?.id]);
+
+  // Card Pointer Handlers
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 || swipeTriggered) return;
+    
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest(`.${styles.actions}`)) {
+      return;
+    }
+    
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDragStart({ x: e.clientX, y: e.clientY });
+    setIsDragging(true);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragStart || !isDragging) return;
+    const offsetX = e.clientX - dragStart.x;
+    const offsetY = e.clientY - dragStart.y;
+    setDragOffset({ x: offsetX, y: offsetY });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragStart || !isDragging) return;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    setIsDragging(false);
+    setDragStart(null);
+
+    const totalX = dragOffset.x;
+    const threshold = 120;
+
+    if (totalX > threshold) {
+      // Swipe Right -> Like
+      setDragOffset({ x: 0, y: 0 });
+      handleLike(currentProfile);
+    } else if (totalX < -threshold) {
+      // Swipe Left -> Pass
+      setDragOffset({ x: 0, y: 0 });
+      handlePass(currentProfile.id);
+    } else {
+      // Tap or Snap Back
+      const distance = Math.sqrt(dragOffset.x * dragOffset.x + dragOffset.y * dragOffset.y);
+      if (distance < 5) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const width = rect.width;
+        const photosCount = currentProfile.photos?.length || 0;
+
+        if (photosCount > 1) {
+          if (clickX < width * 0.3) {
+            setActivePhotoIdx(prev => Math.max(0, prev - 1));
+          } else if (clickX > width * 0.7) {
+            setActivePhotoIdx(prev => Math.min(photosCount - 1, prev + 1));
+          }
+        }
+      }
+      setDragOffset({ x: 0, y: 0 });
+    }
+  };
+
+  const handlePointerCancel = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.currentTarget) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch (err) {}
+    }
+    setIsDragging(false);
+    setDragStart(null);
+    setDragOffset({ x: 0, y: 0 });
+  };
 
   useEffect(() => {
     const fetchUserAndData = async () => {
@@ -195,21 +336,101 @@ export default function DiscoverPage() {
     );
   }
 
-  const currentProfile = profiles[currentIndex];
+  const likeOpacity = swipeDirection === 'like' 
+    ? 1 
+    : (isDragging && dragOffset.x > 0 ? Math.min(1, dragOffset.x / 100) : 0);
+
+  const passOpacity = swipeDirection === 'pass' 
+    ? 1 
+    : (isDragging && dragOffset.x < 0 ? Math.min(1, -dragOffset.x / 100) : 0);
 
   return (
     <div className={styles.page}>
       <TopBar />
+
+      {/* Ambient Floating Petals */}
+      <div className={styles.floatingContainer}>
+        {petals.map(p => (
+          <div 
+            key={p.id}
+            className={styles.floatingPetal}
+            style={{
+              left: p.left,
+              animationDelay: p.delay,
+              animationDuration: p.duration
+            }}
+          />
+        ))}
+      </div>
+
       <main className={styles.main}>
+        {/* Collapsible District & Community Filter Tray */}
+        <div className={styles.filterBar}>
+          <div 
+            className={styles.filterHeader} 
+            onClick={() => setIsFilterExpanded(prev => !prev)}
+          >
+            <div className={styles.filterTitle}>
+              <span>🔍 Filter Profiles</span>
+              {(selectedDistrict || selectedCommunity) && (
+                <span style={{ fontSize: '0.8rem', color: 'var(--secondary)', fontWeight: 500 }}>
+                  ({[selectedDistrict && `District: ${selectedDistrict}`, selectedCommunity && `Community: ${selectedCommunity.replace('_', ' ')}`].filter(Boolean).join(', ')})
+                </span>
+              )}
+            </div>
+            <span className={`${styles.filterIcon} ${isFilterExpanded ? styles.filterIconExpanded : ''}`}>
+              ▼
+            </span>
+          </div>
+          
+          {isFilterExpanded && (
+            <div className={styles.filterBody}>
+              <div className={styles.filterGroup}>
+                <label className={styles.filterLabel}>District</label>
+                <select 
+                  className={styles.filterSelect}
+                  value={selectedDistrict}
+                  onChange={(e) => {
+                    setSelectedDistrict(e.target.value);
+                    setCurrentIndex(0);
+                  }}
+                >
+                  <option value="">All Districts</option>
+                  {uniqueDistricts.map(d => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.filterGroup}>
+                <label className={styles.filterLabel}>Community</label>
+                <select 
+                  className={styles.filterSelect}
+                  value={selectedCommunity}
+                  onChange={(e) => {
+                    setSelectedCommunity(e.target.value);
+                    setCurrentIndex(0);
+                  }}
+                >
+                  <option value="">All Communities</option>
+                  {uniqueCommunities.map(c => (
+                    <option key={c} value={c}>{c.replace('_', ' ')}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className={styles.cardContainer}>
           {currentProfile ? (
             <div className={styles.stackWrapper}>
               {/* Background Card 2 */}
-              {profiles[currentIndex + 2] && (
+              {filteredProfiles[currentIndex + 2] && (
                 <div className={`${styles.card} ${styles.cardBack2}`}>
                   <div className={styles.imagePlaceholder}>
-                    {profiles[currentIndex + 2].photos?.[0] ? (
-                      <img src={profiles[currentIndex + 2].photos[0]} alt="" className={styles.profileImg} />
+                    {filteredProfiles[currentIndex + 2].photos?.[0] ? (
+                      <img src={filteredProfiles[currentIndex + 2].photos[0]} alt="" className={styles.profileImg} />
                     ) : (
                       <div className={styles.noPhoto}>🌸</div>
                     )}
@@ -218,11 +439,11 @@ export default function DiscoverPage() {
               )}
 
               {/* Background Card 1 */}
-              {profiles[currentIndex + 1] && (
+              {filteredProfiles[currentIndex + 1] && (
                 <div className={`${styles.card} ${styles.cardBack1}`}>
                   <div className={styles.imagePlaceholder}>
-                    {profiles[currentIndex + 1].photos?.[0] ? (
-                      <img src={profiles[currentIndex + 1].photos[0]} alt="" className={styles.profileImg} />
+                    {filteredProfiles[currentIndex + 1].photos?.[0] ? (
+                      <img src={filteredProfiles[currentIndex + 1].photos[0]} alt="" className={styles.profileImg} />
                     ) : (
                       <div className={styles.noPhoto}>🌸</div>
                     )}
@@ -233,25 +454,57 @@ export default function DiscoverPage() {
               {/* Top Active Card */}
               <div 
                 className={`${styles.card} ${styles.cardActive} ${
+                  isDragging ? styles.dragging : ''
+                } ${
                   swipeDirection === 'like' ? styles.swipeRight : 
                   swipeDirection === 'pass' ? styles.swipeLeft : ''
                 }`}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerCancel}
+                style={isDragging ? {
+                  transform: `translate(${dragOffset.x}px, ${dragOffset.y}px) rotate(${dragOffset.x * 0.05}deg)`
+                } : undefined}
               >
                 {/* Swipe Text Overlays */}
-                {swipeDirection === 'like' && (
-                  <div className={`${styles.swipeOverlay} ${styles.overlayLike}`}>
+                {likeOpacity > 0 && (
+                  <div 
+                    className={`${styles.swipeOverlay} ${styles.overlayLike}`}
+                    style={{ opacity: likeOpacity }}
+                  >
                     Bhal Lage
                   </div>
                 )}
-                {swipeDirection === 'pass' && (
-                  <div className={`${styles.swipeOverlay} ${styles.overlayPass}`}>
+                {passOpacity > 0 && (
+                  <div 
+                    className={`${styles.swipeOverlay} ${styles.overlayPass}`}
+                    style={{ opacity: passOpacity }}
+                  >
                     Nalagibo
                   </div>
                 )}
 
                 <div className={styles.imagePlaceholder}>
-                  {currentProfile.photos?.[0] ? (
-                    <img src={currentProfile.photos[0]} alt={currentProfile.display_name} className={styles.profileImg} />
+                  {/* Story Indicators */}
+                  {currentProfile.photos && currentProfile.photos.length > 1 && (
+                    <div className={styles.storyIndicators}>
+                      {currentProfile.photos.map((_, idx) => (
+                        <div 
+                          key={idx} 
+                          className={`${styles.storyIndicator} ${idx === activePhotoIdx ? styles.storyIndicatorActive : ''}`} 
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {currentProfile.photos?.[activePhotoIdx] || currentProfile.photos?.[0] ? (
+                    <img 
+                      src={currentProfile.photos[activePhotoIdx] || currentProfile.photos[0]} 
+                      alt={currentProfile.display_name} 
+                      className={styles.profileImg} 
+                      draggable={false}
+                    />
                   ) : (
                     <div className={styles.noPhoto}>🌸</div>
                   )}
