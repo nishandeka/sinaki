@@ -370,3 +370,47 @@
   font-size: 0.9rem;
 }
 
+@media (max-width: 768px) {
+  .main {
+    padding: var(--space-lg) var(--space-md) var(--space-3xl) var(--space-md);
+  }
+}
+
+@media (max-width: 600px) {
+  .saveBar {
+    width: calc(100% - var(--space-lg) * 2);
+    left: var(--space-lg);
+    transform: none;
+    border-radius: var(--radius-lg);
+    padding: var(--space-sm) var(--space-md);
+    justify-content: space-between;
+    gap: var(--space-sm);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+}
+
+@media (max-width: 480px) {
+  .displayNameInput {
+    font-size: 1.75rem;
+  }
+  .photoWall {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--space-sm);
+  }
+  .polaroid {
+    padding: 6px 6px 18px 6px;
+  }
+  .polaroidCaption {
+    font-size: 0.75rem;
+    bottom: 2px;
+  }
+  .profileCard {
+    padding: var(--space-md);
+    gap: var(--space-md);
+  }
+}
+
+

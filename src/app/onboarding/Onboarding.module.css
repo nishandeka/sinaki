@@ -471,4 +471,42 @@
   margin-bottom: var(--space-lg);
 }
 
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+  .photoGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .genderCardGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+  .genderCard {
+    padding: var(--space-md);
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--space-md);
+    text-align: left;
+  }
+  .genderCardIcon {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .districtGrid {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: var(--space-sm);
+  }
+  .districtItem {
+    padding: var(--space-xs) var(--space-sm);
+  }
+}
+
+
 

@@ -106,6 +106,7 @@
 
 .info {
   flex: 1;
+  min-width: 0;
 }
 
 .partnerName {
@@ -123,7 +124,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 320px;
+  max-width: 100%;
 }
 
 .lastMessage.unreadText {
@@ -250,4 +251,40 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+@media (max-width: 768px) {
+  .main {
+    padding: var(--space-lg) var(--space-md);
+  }
+  .title {
+    font-size: 1.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .main {
+    padding: var(--space-md) var(--space-sm);
+  }
+  .title {
+    font-size: 1.6rem;
+  }
+  .avatar {
+    width: 52px;
+    height: 52px;
+  }
+  .matchItem {
+    padding: var(--space-sm);
+    gap: var(--space-sm);
+  }
+  .avatarContainer {
+    margin-right: var(--space-sm);
+  }
+  .lastMessage {
+    font-size: 0.85rem;
+  }
+  .partnerName {
+    font-size: 1rem;
+  }
+}
+
 

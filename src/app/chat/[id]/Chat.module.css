@@ -511,4 +511,58 @@
   font-size: 0.85rem;
 }
 
+@media (max-width: 768px) {
+  .main {
+    padding: 0;
+    height: calc(100vh - 64px);
+  }
+  .chatContainer {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .composer {
+    padding: var(--space-sm);
+    gap: var(--space-sm);
+  }
+  .composerInput {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.9rem;
+  }
+  .sendBtn {
+    padding: var(--space-sm) var(--space-md);
+  }
+  .bubble {
+    max-width: 85%;
+  }
+  .localVideoContainer {
+    width: 80px;
+    height: 120px;
+    top: var(--space-sm, 8px);
+    right: var(--space-sm, 8px);
+  }
+  .callControls {
+    bottom: 24px;
+    gap: var(--space-md, 12px);
+  }
+  .controlBtn {
+    width: 48px;
+    height: 48px;
+    font-size: 1.1rem;
+  }
+  .voiceAvatar {
+    width: 110px;
+    height: 110px;
+    font-size: 2.5rem;
+  }
+  .callInfoText h2 {
+    font-size: 1.6rem;
+  }
+}
+
+
 

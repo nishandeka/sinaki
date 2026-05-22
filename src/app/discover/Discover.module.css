@@ -733,3 +733,56 @@
   border-color: var(--outline);
 }
 
+@media (max-width: 480px) {
+  .stackWrapper {
+    max-width: 320px;
+    height: 440px;
+  }
+  .profileName {
+    font-size: 1.3rem;
+  }
+  .details {
+    padding: var(--space-md);
+    gap: 6px;
+  }
+  .bioText {
+    font-size: 0.8rem;
+    -webkit-line-clamp: 2;
+  }
+  .chip {
+    font-size: 0.65rem;
+    padding: 2px var(--space-xs);
+  }
+  .actions {
+    padding: var(--space-sm) var(--space-md) var(--space-md) var(--space-md);
+    gap: var(--space-md);
+  }
+  .actionBtn {
+    width: 44px;
+    height: 44px;
+  }
+  .likeBtn {
+    width: 50px;
+    height: 50px;
+  }
+  .filterBar {
+    border-radius: var(--radius-lg);
+    padding: 8px var(--space-md);
+    gap: var(--space-sm);
+  }
+  .filterBody {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+  .filterGroup {
+    min-width: 100%;
+  }
+  .matchModalContent {
+    padding: var(--space-xl) var(--space-md);
+  }
+  .matchTitle {
+    font-size: 2rem;
+  }
+}
+
+
