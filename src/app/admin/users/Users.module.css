@@ -1,0 +1,254 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.titleRow h1 {
+  font-family: var(--font-playfair), serif;
+  font-weight: 700;
+  color: #F0F0F0;
+}
+
+/* Toast alert */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 16px 24px;
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 11000;
+  animation: slideIn 0.3s ease, fadeOut 0.3s ease 3.7s;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(100px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.toastSuccess { background: #4A7C59; }
+.toastError { background: #C0392B; }
+
+/* Filter Section Grid */
+.filterSection {
+  background: #1A1A1A;
+  border: 1px solid #2A2A2A;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.filterBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filterBox label {
+  font-size: 0.8rem;
+  color: #888888;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.input, .select {
+  background: #0F0F0F;
+  border: 1px solid #2A2A2A;
+  color: #F0F0F0;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  outline: none;
+  width: 100%;
+}
+
+.input:focus, .select:focus {
+  border-color: #B8860B;
+}
+
+.ageSliderGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slider {
+  width: 100%;
+  accent-color: #B8860B; /* Gold Slider */
+  background: #0F0F0F;
+  cursor: pointer;
+}
+
+/* User management Table */
+.tableWrapper {
+  background: #1A1A1A;
+  border: 1px solid #2A2A2A;
+  border-radius: 8px;
+  overflow-x: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.table th {
+  padding: 14px 20px;
+  border-bottom: 1px solid #2A2A2A;
+  color: #888888;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #2A2A2A;
+  color: #F0F0F0;
+  vertical-align: middle;
+}
+
+.tableRow {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.tableRow:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.table tr:last-child td { border-bottom: none; }
+
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatarMini {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2A2A2A;
+  color: #888888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.75rem;
+}
+
+.tableRow:hover .avatarMini {
+  background: #B8860B;
+  color: #0F0F0F;
+}
+
+.capitalize {
+  text-transform: capitalize;
+}
+
+.exportBtn {
+  background: transparent;
+  border: 1px solid #B8860B;
+  color: #B8860B;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.exportBtn:hover {
+  background: rgba(184, 134, 11, 0.08);
+}
+
+.viewBtn {
+  background: transparent;
+  border: 1px solid #2A2A2A;
+  color: #888888;
+  padding: 6px 14px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.8rem;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.viewBtn:hover {
+  border-color: #888888;
+  color: #F0F0F0;
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.badgeGreen {
+  background: rgba(74, 124, 89, 0.08);
+  color: #4A7C59;
+  border: 1px solid rgba(74, 124, 89, 0.2);
+}
+
+.badgeRed {
+  background: rgba(192, 57, 43, 0.08);
+  color: #C0392B;
+  border: 1px solid rgba(192, 57, 43, 0.2);
+}
+
+.badgeAmber {
+  background: rgba(230, 126, 34, 0.08);
+  color: #E67E22;
+  border: 1px solid rgba(230, 126, 34, 0.2);
+}
+
+.statusLabel {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.statusActive { color: #4A7C59; }
+.statusSuspended { color: #C0392B; }
+
+.emptyTable, .loadingUsers {
+  padding: 48px;
+  text-align: center;
+  color: #888888;
+  font-style: italic;
+}
