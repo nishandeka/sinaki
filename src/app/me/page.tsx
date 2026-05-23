@@ -123,6 +123,7 @@ export default function MyProfilePage() {
           year_of_study: editedProfile.year_of_study,
           district: editedProfile.district,
           photos: editedProfile.photos,
+          religion: editedProfile.religion,
         })
         .eq('id', profile.id);
 
@@ -279,6 +280,25 @@ export default function MyProfilePage() {
               onChange={(e) => handleInputChange('district', e.target.value)}
               placeholder="e.g. Jorhat"
             />
+          </div>
+
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>Religion</label>
+            <select
+              className={styles.inlineSelect}
+              value={editedProfile?.religion || 'prefer_not_to_say'}
+              onChange={(e) => handleInputChange('religion', e.target.value)}
+            >
+              <option value="hindu">Hindu</option>
+              <option value="muslim">Muslim</option>
+              <option value="christian">Christian</option>
+              <option value="buddhist">Buddhist</option>
+              <option value="sikh">Sikh</option>
+              <option value="jain">Jain</option>
+              <option value="tribal_religion">Tribal Religion</option>
+              <option value="other">Other</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
           </div>
         </div>
 
