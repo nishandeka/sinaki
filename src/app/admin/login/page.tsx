@@ -18,16 +18,10 @@ export default function AdminLoginPage() {
   const [locked, setLocked] = useState(false);
   const [lockoutRemaining, setLockoutRemaining] = useState('');
 
-  // 2FA TOTP Phase
-  const [show2FA, setShow2FA] = useState(false);
-  const [totpCode, setTotpCode] = useState('');
-  const [tempUserId, setTempUserId] = useState<string | null>(null);
-
-  // Check lockout on mount
+  // Check lockout on mount & redirect if already authenticated admin
   useEffect(() => {
     checkLockoutStatus();
-    
-    // Check if already authenticated admin and redirect to dashboard
+
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         supabase
@@ -86,6 +80,18 @@ export default function AdminLoginPage() {
     return true;
   };
 
+  const handleFailedAttempt = () => {
+    const attemptsStr = localStorage.getItem(ATTEMPTS_KEY) || '0';
+    const attempts = parseInt(attemptsStr, 10) + 1;
+    localStorage.setItem(ATTEMPTS_KEY, attempts.toString());
+
+    if (attempts >= 5) {
+      localStorage.setItem(LOCKOUT_KEY, Date.now().toString());
+      setLocked(true);
+      checkLockoutStatus();
+    }
+  };
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -98,7 +104,7 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      // 1. Authenticate credentials
+      // 1. Authenticate with Supabase
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -106,9 +112,11 @@ export default function AdminLoginPage() {
 
       if (authError) {
         handleFailedAttempt();
-        setError(authError.message === 'Invalid login credentials' 
-          ? 'Incorrect email or password. Please try again.' 
-          : authError.message);
+        setError(
+          authError.message === 'Invalid login credentials'
+            ? 'Incorrect email or password. Please try again.'
+            : authError.message
+        );
         setLoading(false);
         return;
       }
@@ -119,7 +127,7 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // 2. Validate user is an admin
+      // 2. Validate the user is an active admin
       const { data: adminRecord, error: adminError } = await supabase
         .from('admins')
         .select('*')
@@ -134,78 +142,35 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // 3. Clear failed attempts on successful admin validation
+      // 3. Clear failed attempts
       localStorage.removeItem(ATTEMPTS_KEY);
       localStorage.removeItem(LOCKOUT_KEY);
 
-      // 4. Force 2FA for super_admin and allow 2FA prompt for others
-      // For this prototype, we'll request TOTP verification step
-      setTempUserId(user.id);
-      setShow2FA(true);
-      setLoading(false);
-
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred. Please try again.');
-      setLoading(false);
-    }
-  };
-
-  const handleFailedAttempt = () => {
-    const attemptsStr = localStorage.getItem(ATTEMPTS_KEY) || '0';
-    const attempts = parseInt(attemptsStr, 10) + 1;
-    localStorage.setItem(ATTEMPTS_KEY, attempts.toString());
-
-    if (attempts >= 5) {
-      localStorage.setItem(LOCKOUT_KEY, Date.now().toString());
-      setLocked(true);
-      checkLockoutStatus();
-    }
-  };
-
-  const handleTOTPSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    // Mock 2FA validation - accepted format: 6 digits (e.g. 123456)
-    if (!/^\d{6}$/.test(totpCode)) {
-      setError('Invalid 2FA code. Must be a 6-digit number.');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // Create Audit log entry for login
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      // 4. Write audit log entry
+      try {
         let ipAddress = 'unknown';
         try {
           const ipRes = await fetch('https://api.ipify.org?format=json');
           const ipData = await ipRes.json();
           ipAddress = ipData.ip;
-        } catch (e) {}
+        } catch (_) {}
 
-        const { data: adminRecord } = await supabase
-          .from('admins')
-          .select('email, role')
-          .eq('id', user.id)
-          .single();
-
-        if (adminRecord) {
-          await supabase.from('audit_logs').insert({
-            admin_id: user.id,
-            admin_email: adminRecord.email,
-            admin_role: adminRecord.role,
-            action_type: 'ADMIN_LOGIN_SUCCESS',
-            details: 'Admin verified TOTP 2FA successfully and logged in',
-            ip_address: ipAddress
-          });
-        }
+        await supabase.from('audit_logs').insert({
+          admin_id: user.id,
+          admin_email: adminRecord.email,
+          admin_role: adminRecord.role,
+          action_type: 'ADMIN_LOGIN_SUCCESS',
+          details: 'Admin signed in successfully with email and password.',
+          ip_address: ipAddress,
+        });
+      } catch (_) {
+        // Non-critical — don't block login if audit log fails
       }
 
+      // 5. Redirect to dashboard
       router.replace('/admin/dashboard');
     } catch (err: any) {
-      setError('2FA verification failed.');
+      setError(err.message || 'An unexpected error occurred. Please try again.');
       setLoading(false);
     }
   };
@@ -219,98 +184,55 @@ export default function AdminLoginPage() {
         <div className={styles.header}>
           <img src="/logo.png" alt="Sinaki Logo" className={styles.logoImage} />
           <h1 className={styles.title}>Sinaki Admin</h1>
-          <p className={styles.subtitle}>
-            {show2FA ? 'Enter Google Authenticator Code' : 'Sign in to access your administrative tools.'}
-          </p>
+          <p className={styles.subtitle}>Sign in to access your administrative tools.</p>
         </div>
 
         {error && (
           <div className={`${styles.alert} ${locked ? styles.alertDanger : styles.alertWarning}`}>
-            {locked ? '🔒 ' : ''}{error}
+            {locked ? '🔒 ' : '⚠️ '}{error}
             {locked && <div className={styles.countdownTimer}>Unlocks in: {lockoutRemaining}</div>}
           </div>
         )}
 
-        {!show2FA ? (
-          <form className={styles.form} onSubmit={handleLoginSubmit}>
-            <div className={styles.inputGroup}>
-              <label htmlFor="email" className={styles.label}>Email Address</label>
-              <input
-                id="email"
-                type="email"
-                className={styles.input}
-                placeholder="admin@sinaki.in"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading || locked}
-              />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label htmlFor="password" className={styles.label}>Password</label>
-              <input
-                id="password"
-                type="password"
-                className={styles.input}
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading || locked}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className={styles.submitBtn}
+        <form className={styles.form} onSubmit={handleLoginSubmit}>
+          <div className={styles.inputGroup}>
+            <label htmlFor="email" className={styles.label}>Email Address</label>
+            <input
+              id="email"
+              type="email"
+              className={styles.input}
+              placeholder="admin@sinaki.in"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
               disabled={loading || locked}
-            >
-              {loading ? 'Verifying Credentials...' : 'Sign In'}
-            </button>
-          </form>
-        ) : (
-          <form className={styles.form} onSubmit={handleTOTPSubmit}>
-            <div className={styles.inputGroup}>
-              <label htmlFor="totp" className={styles.label}>TOTP Verification Code</label>
-              <input
-                id="totp"
-                type="text"
-                maxLength={6}
-                pattern="\d{6}"
-                className={`${styles.input} ${styles.totpInput}`}
-                placeholder="0 0 0 0 0 0"
-                value={totpCode}
-                onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
-                required
-                disabled={loading}
-                autoFocus
-              />
-              <span className={styles.hint}>Open Google Authenticator on your mobile device.</span>
-            </div>
+              autoComplete="email"
+            />
+          </div>
 
-            <button
-              type="submit"
-              className={styles.submitBtn}
-              disabled={loading}
-            >
-              {loading ? 'Verifying 2FA...' : 'Verify & Continue'}
-            </button>
+          <div className={styles.inputGroup}>
+            <label htmlFor="password" className={styles.label}>Password</label>
+            <input
+              id="password"
+              type="password"
+              className={styles.input}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={loading || locked}
+              autoComplete="current-password"
+            />
+          </div>
 
-            <button
-              type="button"
-              className={styles.backBtn}
-              onClick={() => {
-                setShow2FA(false);
-                setTotpCode('');
-                supabase.auth.signOut();
-              }}
-              disabled={loading}
-            >
-              Back to Login
-            </button>
-          </form>
-        )}
+          <button
+            type="submit"
+            className={styles.submitBtn}
+            disabled={loading || locked}
+          >
+            {loading ? 'Signing In...' : 'Sign In'}
+          </button>
+        </form>
       </div>
     </div>
   );
