@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import TopBar from '@/components/TopBar';
 import { supabase } from '@/lib/supabase';
 import styles from './Profile.module.css';
@@ -317,6 +318,9 @@ export default function MyProfilePage() {
         )}
 
         <div className={styles.actions}>
+          <Link href="/me/help" className={styles.helpBtn}>
+            ❓ Help & Support
+          </Link>
           <button className={styles.logoutBtn} onClick={handleLogout}>
             Logout from Sinaki
           </button>
