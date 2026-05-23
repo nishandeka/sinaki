@@ -75,6 +75,10 @@ export default function BasicsPage() {
       setError('Please select your gender.');
       return;
     }
+    if (!formData.religion) {
+      setError('Please select your religion.');
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -204,7 +208,6 @@ export default function BasicsPage() {
               <option value="jain">Jain</option>
               <option value="tribal_religion">Tribal Religion</option>
               <option value="other">Other</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
             </select>
           </div>
           <div className={styles.inputGroup} />

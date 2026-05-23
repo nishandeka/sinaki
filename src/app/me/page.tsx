@@ -286,9 +286,11 @@ export default function MyProfilePage() {
             <label className={styles.label}>Religion</label>
             <select
               className={styles.inlineSelect}
-              value={editedProfile?.religion || 'prefer_not_to_say'}
+              value={editedProfile?.religion || ''}
               onChange={(e) => handleInputChange('religion', e.target.value)}
+              required
             >
+              <option value="" disabled>Select your religion</option>
               <option value="hindu">Hindu</option>
               <option value="muslim">Muslim</option>
               <option value="christian">Christian</option>
@@ -297,7 +299,6 @@ export default function MyProfilePage() {
               <option value="jain">Jain</option>
               <option value="tribal_religion">Tribal Religion</option>
               <option value="other">Other</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
             </select>
           </div>
         </div>

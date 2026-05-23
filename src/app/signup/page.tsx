@@ -169,7 +169,6 @@ export default function SignupPage() {
               <option value="jain">Jain</option>
               <option value="tribal_religion">Tribal Religion</option>
               <option value="other">Other</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
             </select>
           </div>
 
