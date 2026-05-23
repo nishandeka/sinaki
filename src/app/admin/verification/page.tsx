@@ -248,13 +248,14 @@ export default function VerificationQueue() {
     try {
       const now = new Date().toISOString();
 
-      // 1. Update Profile status
+      // 1. Update Profile status and activate profile
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           verification_status: 'verified',
           verified_at: now,
-          rejection_reason: null
+          rejection_reason: null,
+          is_active: true
         })
         .eq('id', selectedItem.profile_id);
 

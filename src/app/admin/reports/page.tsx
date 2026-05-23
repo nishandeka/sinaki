@@ -530,7 +530,11 @@ export default function ReportsModule() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ verification_status: 'verified', verified_at: new Date().toISOString() })
+        .update({ 
+          verification_status: 'verified', 
+          verified_at: new Date().toISOString(),
+          is_active: true 
+        })
         .eq('id', selectedReport.reported_id);
 
       if (error) throw error;
