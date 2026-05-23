@@ -548,6 +548,147 @@ export default function ReportsModule() {
     }
   };
 
+  const handleForceReVerify = async () => {
+    if (!selectedReport || !admin) return;
+    if (actionNotes.trim().length < 10) {
+      triggerToast('Please write a detailed explanation (minimum 10 characters).', 'warning');
+      return;
+    }
+    try {
+      const now = new Date().toISOString();
+      const reason = `Re-verification requested by administrator: ${actionNotes.trim()}`;
+
+      // Update profiles
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          verification_status: 'rejected',
+          rejection_reason: reason
+        })
+        .eq('id', selectedReport.reported_id);
+
+      if (profileError) throw profileError;
+
+      // Update report status
+      await supabase
+        .from('reports')
+        .update({
+          is_reviewed: true,
+          reviewed_by: admin.email,
+          action_taken: 'force_reverify',
+          reviewed_at: now
+        })
+        .eq('id', selectedReport.id);
+
+      // Create notification
+      await supabase.from('notifications').insert({
+        user_id: selectedReport.reported_id,
+        type: 'verification_rejected',
+        title: 'ID Re-verification Required ⚠️',
+        body: `An administrator has requested that you re-verify your identity: ${actionNotes.trim()}`
+      });
+
+      await addAuditLog('ADMIN_FORCE_REVERIFY', selectedReport.reported_id, selectedReport.reported_name, `Forced identity re-verification. Notes: ${actionNotes.trim()}`);
+      triggerToast('Account locked for identity re-verification.', 'success');
+      setShowDrawer(false);
+      setSelectedReport(null);
+      fetchReports();
+    } catch (e: any) {
+      console.error(e);
+      triggerToast(e.message || 'Action failed.', 'error');
+    }
+  };
+
+  const handleRestoreAccess = async () => {
+    if (!selectedReport || !admin) return;
+    if (actionNotes.trim().length < 10) {
+      triggerToast('Please write a detailed explanation (minimum 10 characters).', 'warning');
+      return;
+    }
+    try {
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          is_active: true,
+          verification_status: 'verified',
+          rejection_reason: null
+        })
+        .eq('id', selectedReport.reported_id);
+
+      if (error) throw error;
+
+      await supabase
+        .from('reports')
+        .update({
+          is_reviewed: true,
+          reviewed_by: admin.email,
+          action_taken: 'access_restored',
+          reviewed_at: now
+        })
+        .eq('id', selectedReport.id);
+
+      await supabase.from('notifications').insert({
+        user_id: selectedReport.reported_id,
+        type: 'system',
+        title: 'Account Access Restored',
+        body: 'Your account access has been fully restored by an administrator.'
+      });
+
+      await addAuditLog('ADMIN_RESTORE_ACCESS', selectedReport.reported_id, selectedReport.reported_name, `Restored account access. Notes: ${actionNotes.trim()}`);
+      triggerToast('User account access restored successfully!', 'success');
+      setShowDrawer(false);
+      setSelectedReport(null);
+      fetchReports();
+    } catch (e: any) {
+      console.error(e);
+      triggerToast(e.message || 'Action failed.', 'error');
+    }
+  };
+
+  const handlePermanentlyDeleteUser = async () => {
+    if (!selectedReport || !admin) return;
+    if (admin.role !== 'super_admin') {
+      triggerToast('Unauthorized: Only Super Admins can permanently delete accounts.', 'error');
+      return;
+    }
+    if (actionNotes.trim().length < 10) {
+      triggerToast('Please write a detailed explanation (minimum 10 characters).', 'warning');
+      return;
+    }
+    const confirmDelete = window.confirm(`Are you absolutely sure you want to permanently delete profile for ${selectedReport.reported_name}? This cannot be undone.`);
+    if (!confirmDelete) return;
+
+    try {
+      const now = new Date().toISOString();
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', selectedReport.reported_id);
+
+      if (error) throw error;
+
+      await supabase
+        .from('reports')
+        .update({
+          is_reviewed: true,
+          reviewed_by: admin.email,
+          action_taken: 'permanently_deleted',
+          reviewed_at: now
+        })
+        .eq('id', selectedReport.id);
+
+      await addAuditLog('ADMIN_DELETE_USER', selectedReport.reported_id, selectedReport.reported_name, `Permanently deleted user account. Notes: ${actionNotes.trim()}`);
+      triggerToast('Profile permanently deleted from platform.', 'success');
+      setShowDrawer(false);
+      setSelectedReport(null);
+      fetchReports();
+    } catch (e: any) {
+      console.error(e);
+      triggerToast(e.message || 'Failed to delete profile.', 'error');
+    }
+  };
+
   const handleDeleteProfile = async () => {
     if (!selectedReport) return;
     const confirmDelete = window.confirm(`Are you absolutely sure you want to permanently delete profile for ${selectedReport.reported_name}? This cannot be undone.`);
@@ -869,7 +1010,10 @@ export default function ReportsModule() {
 
                 {/* Moderation actions input forms */}
                 <div className={styles.actionsCard}>
-                  <h4>Moderator Actions</h4>
+                  <h4>Disciplinary Actions & Moderation</h4>
+                  <p style={{ fontSize: '0.8rem', color: '#888888', marginBottom: '16px', lineHeight: '1.4' }}>
+                    Select an action below to apply safety measures. All actions require notes.
+                  </p>
                   
                   <div className={styles.formGroup}>
                     <label className={styles.label}>Audit Resolution Note (Min 10 chars) *</label>
@@ -878,44 +1022,114 @@ export default function ReportsModule() {
                       className={styles.actionTextarea}
                       value={actionNotes}
                       onChange={(e) => setActionNotes(e.target.value)}
-                      rows={4}
+                      rows={3}
                       required
                     />
                   </div>
 
-                  <div className={styles.disciplinaryControls}>
-                    <div className={styles.dismissRow}>
-                      <button className={styles.btnActionDismiss} onClick={() => handleModerationAction('dismiss')}>
-                        No Action — Dismiss Report
-                      </button>
-                      <button className={styles.btnActionInvestigate} onClick={() => handleModerationAction('investigate')}>
-                        Under Investigation
-                      </button>
-                    </div>
+                  <div className={styles.disciplinaryControls} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     
-                    <button className={styles.btnActionWarn} onClick={() => handleModerationAction('warn')}>
-                      Send Formal Warning to User
-                    </button>
-
-                    <div className={styles.suspendPanel}>
-                      <select
-                        className={styles.selectDays}
-                        value={suspensionDays}
-                        onChange={(e) => setSuspensionDays(e.target.value)}
-                      >
-                        <option value="1">1 Day Suspension</option>
-                        <option value="3">3 Days Suspension</option>
-                        <option value="7">7 Days Suspension</option>
-                        <option value="30">30 Days Suspension</option>
-                      </select>
-                      <button className={styles.btnActionSuspend} onClick={() => handleModerationAction('suspend')}>
-                        Temporarily Suspend Account
+                    {/* Dismiss / Investigate */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', borderBottom: '1px solid #2A2A2A', paddingBottom: '16px' }}>
+                      <button type="button" className={styles.btnActionDismiss} onClick={() => handleModerationAction('dismiss')} style={{ fontSize: '0.8rem', padding: '10px' }}>
+                        Dismiss Report
+                      </button>
+                      <button type="button" className={styles.btnActionInvestigate} onClick={() => handleModerationAction('investigate')} style={{ fontSize: '0.8rem', padding: '10px' }}>
+                        Investigate
                       </button>
                     </div>
 
-                    <button className={styles.btnActionBan} onClick={() => handleModerationAction('ban')}>
-                      Permanently Ban Accused User
-                    </button>
+                    {/* Send Warning Alert */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <b style={{ fontSize: '0.85rem', color: '#FFF' }}>Send Warning Alert</b>
+                      <span style={{ fontSize: '0.75rem', color: '#888' }}>Send an in-app system message cautioning the user against bad behaviors.</span>
+                      <button type="button" className={styles.btnActionWarn} onClick={() => handleModerationAction('warn')} style={{ width: '100%', marginTop: '6px', fontSize: '0.85rem', padding: '10px' }}>
+                        Send Warning
+                      </button>
+                    </div>
+
+                    {/* Force ID Re-verification */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid #2A2A2A', paddingTop: '16px' }}>
+                      <b style={{ fontSize: '0.85rem', color: '#FFF' }}>Force ID Re-verification</b>
+                      <span style={{ fontSize: '0.75rem', color: '#888' }}>Lock account capabilities and request they re-upload verification documents.</span>
+                      <button 
+                        type="button" 
+                        className={styles.btnActionWarn} 
+                        onClick={handleForceReVerify} 
+                        style={{ width: '100%', marginTop: '6px', fontSize: '0.85rem', padding: '10px', borderColor: '#B8860B', color: '#B8860B', background: 'transparent' }}
+                      >
+                        Force Re-verify
+                      </button>
+                    </div>
+
+                    {/* Temporarily Suspend */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid #2A2A2A', paddingTop: '16px' }}>
+                      <b style={{ fontSize: '0.85rem', color: '#FFF' }}>Temporarily Suspend</b>
+                      <span style={{ fontSize: '0.75rem', color: '#888' }}>Deactivate account and block login sessions for a specific time range.</span>
+                      <div className={styles.suspendPanel} style={{ marginTop: '6px' }}>
+                        <select
+                          className={styles.selectDays}
+                          value={suspensionDays}
+                          onChange={(e) => setSuspensionDays(e.target.value)}
+                          style={{ background: '#0F0F0F', border: '1px solid #2A2A2A', color: '#FFF', borderRadius: '6px', padding: '10px' }}
+                        >
+                          <option value="1">1 Day</option>
+                          <option value="3">3 Days</option>
+                          <option value="7">7 Days</option>
+                          <option value="30">30 Days</option>
+                        </select>
+                        <button type="button" className={styles.btnActionSuspend} onClick={() => handleModerationAction('suspend')} style={{ fontSize: '0.85rem', padding: '10px' }}>
+                          Suspend
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Permanently Ban */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid #2A2A2A', paddingTop: '16px' }}>
+                      <b style={{ fontSize: '0.85rem', color: '#FFF' }}>Permanently Ban</b>
+                      <span style={{ fontSize: '0.75rem', color: '#888' }}>Disable account permanently. Profile vanishes from discovery feeds instantly.</span>
+                      <button type="button" className={styles.btnActionBan} onClick={() => handleModerationAction('ban')} style={{ width: '100%', marginTop: '6px', fontSize: '0.85rem', padding: '10px' }}>
+                        Ban Account
+                      </button>
+                    </div>
+
+                    {/* Restore Access */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid #2A2A2A', paddingTop: '16px' }}>
+                      <b style={{ fontSize: '0.85rem', color: '#FFF' }}>Restore Access</b>
+                      <span style={{ fontSize: '0.75rem', color: '#888' }}>Restore login capabilities and remove rejection warning blocks.</span>
+                      <button 
+                        type="button" 
+                        className={styles.btnActionWarn} 
+                        onClick={handleRestoreAccess} 
+                        style={{ width: '100%', marginTop: '6px', fontSize: '0.85rem', padding: '10px', borderColor: '#4A7C59', color: '#4A7C59', background: 'transparent' }}
+                      >
+                        Restore Profile
+                      </button>
+                    </div>
+
+                    {/* Permanently Delete Account */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid #2A2A2A', paddingTop: '16px' }}>
+                      <b style={{ fontSize: '0.85rem', color: '#FFF' }}>Permanently Delete Account</b>
+                      <span style={{ fontSize: '0.75rem', color: '#888' }}>Irreversibly delete profile records and references. (Super Admin Only)</span>
+                      <button 
+                        type="button" 
+                        className={styles.btnActionBan} 
+                        onClick={handlePermanentlyDeleteUser} 
+                        disabled={!admin || admin.role !== 'super_admin'}
+                        style={{ 
+                          width: '100%', 
+                          marginTop: '6px', 
+                          fontSize: '0.85rem', 
+                          padding: '10px', 
+                          backgroundColor: admin?.role === 'super_admin' ? '#C0392B' : '#333', 
+                          cursor: admin?.role === 'super_admin' ? 'pointer' : 'not-allowed',
+                          opacity: admin?.role === 'super_admin' ? 1 : 0.5 
+                        }}
+                      >
+                        Delete User {(!admin || admin.role !== 'super_admin') && '(Disabled)'}
+                      </button>
+                    </div>
+
                   </div>
                 </div>
 
