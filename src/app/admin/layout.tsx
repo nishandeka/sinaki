@@ -46,6 +46,13 @@ export default function AdminLayout({
   const [showNotifications, setShowNotifications] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [warningCountdown, setWarningCountdown] = useState(900); // 15 mins in seconds
+  const [currentSearch, setCurrentSearch] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentSearch(window.location.search);
+    }
+  }, [pathname]);
 
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -121,9 +128,9 @@ export default function AdminLayout({
         .select('id')
         .eq('status', 'pending');
 
-      const { data: reportsCount } = await supabase
+      const { data: reportsCountData } = await supabase
         .from('reports')
-        .select('id')
+        .select('id, reporter_id, reported_id')
         .eq('is_reviewed', false);
 
       const items = [];
@@ -138,15 +145,32 @@ export default function AdminLayout({
           color: '#E67E22'
         });
       }
-      if (reportsCount && reportsCount.length > 0) {
+
+      const reportsList = reportsCountData || [];
+      const standardReports = reportsList.filter(r => r.reporter_id !== r.reported_id);
+      const helpTickets = reportsList.filter(r => r.reporter_id === r.reported_id);
+
+      if (standardReports.length > 0) {
         items.push({
           id: 'report-alert',
           type: 'report',
           title: 'Unreviewed Reports',
-          body: `${reportsCount.length} reports require moderator action.`,
-          count: reportsCount.length,
-          link: '/admin/reports',
+          body: `${standardReports.length} reports require moderator action.`,
+          count: standardReports.length,
+          link: '/admin/reports?tab=unreviewed',
           color: '#E74C3C'
+        });
+      }
+
+      if (helpTickets.length > 0) {
+        items.push({
+          id: 'help-alert',
+          type: 'help',
+          title: 'Help Desk Tickets',
+          body: `${helpTickets.length} support requests require resolution.`,
+          count: helpTickets.length,
+          link: '/admin/reports?tab=help_tickets',
+          color: '#B8860B'
         });
       }
 
@@ -274,6 +298,7 @@ export default function AdminLayout({
   const navItems = [
     { label: 'Dashboard', path: '/admin/dashboard', icon: '🏠', roles: ['super_admin', 'verification_admin', 'moderation_admin', 'support_admin', 'analyst'] },
     { label: 'Verification Queue', path: '/admin/verification', icon: '📋', roles: ['super_admin', 'verification_admin'] },
+    { label: 'Help Desk Tickets', path: '/admin/reports?tab=help_tickets', icon: '✉️', roles: ['super_admin', 'moderation_admin', 'support_admin'] },
     { label: 'Reports', path: '/admin/reports', icon: '🚩', roles: ['super_admin', 'moderation_admin', 'support_admin'] },
     { label: 'Users', path: '/admin/users', icon: '👥', roles: ['super_admin', 'verification_admin', 'moderation_admin', 'support_admin', 'analyst'] },
     { label: 'Flagged Messages', path: '/admin/messages', icon: '💬', roles: ['super_admin', 'moderation_admin'] },
@@ -297,7 +322,11 @@ export default function AdminLayout({
 
           <nav className={styles.nav}>
             {filteredNavItems.map((item, idx) => {
-              const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
+              const itemPathBase = item.path.split('?')[0];
+              const isTabMatch = item.path.includes('?tab=') 
+                ? currentSearch.includes(item.path.split('?')[1]) 
+                : !currentSearch.includes('tab=');
+              const isActive = (pathname === itemPathBase || pathname.startsWith(itemPathBase + '/')) && isTabMatch;
               return (
                 <Link
                   key={idx}

@@ -43,19 +43,19 @@ export default function ReviewPage() {
     setSubmitLoading(true);
 
     try {
-      // Mark profile as complete and active
+      // Mark profile as complete and inactive (pending verification review)
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
           is_profile_complete: true,
-          is_active: true,
+          is_active: false,
           profile_completion_pct: 100
         })
         .eq('id', profile.id);
 
       if (updateError) throw updateError;
 
-      router.push('/discover');
+      router.push('/onboarding/submitted');
     } catch (err: any) {
       setError(err.message || 'Failed to complete profile registration.');
       setSubmitLoading(false);

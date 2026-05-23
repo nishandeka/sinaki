@@ -36,6 +36,19 @@ export default function ChatListPage() {
         router.push('/login');
         return;
       }
+
+      // Check verification status
+      const { data: myProfile } = await supabase
+        .from('profiles')
+        .select('verification_status')
+        .eq('id', user.id)
+        .single();
+
+      if (myProfile && myProfile.verification_status !== 'verified') {
+        router.push('/check-status');
+        return;
+      }
+
       if (active) {
         setCurrentUser(user);
       }

@@ -30,8 +30,14 @@ export default function MyProfilePage() {
         .eq('id', user.id)
         .single();
       
-      setProfile(data);
-      setEditedProfile(data);
+      if (data) {
+        if (data.verification_status !== 'verified') {
+          router.replace('/check-status');
+          return;
+        }
+        setProfile(data);
+        setEditedProfile(data);
+      }
       setLoading(false);
     };
 

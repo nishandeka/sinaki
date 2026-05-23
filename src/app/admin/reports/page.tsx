@@ -28,6 +28,8 @@ interface ReportItem {
   reviewed_at: string | null;
   severity: 'low' | 'medium' | 'high';
   reportCountAgainstUser: number;
+  reported_dob: string;
+  reported_is_active: boolean;
 }
 
 export default function ReportsModule() {
@@ -37,7 +39,7 @@ export default function ReportsModule() {
   const [filteredReports, setFilteredReports] = useState<ReportItem[]>([]);
 
   // Filter and Search tabs
-  const [activeTab, setActiveTab] = useState<'all' | 'unreviewed' | 'investigating' | 'resolved' | 'dismissed'>('unreviewed');
+  const [activeTab, setActiveTab] = useState<'all' | 'unreviewed' | 'help_tickets' | 'investigating' | 'resolved' | 'dismissed'>('unreviewed');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'severity' | 'status'>('newest');
 
@@ -49,6 +51,11 @@ export default function ReportsModule() {
   const [showDrawer, setShowDrawer] = useState(false);
   const [actionNotes, setActionNotes] = useState('');
   const [suspensionDays, setSuspensionDays] = useState('7');
+  
+  // Edit Help details
+  const [editName, setEditName] = useState('');
+  const [editDistrict, setEditDistrict] = useState('');
+  const [editDOB, setEditDOB] = useState('');
 
   // History lists
   const [prevReportsAgainstAccused, setPrevReportsAgainstAccused] = useState<any[]>([]);
@@ -71,7 +78,7 @@ export default function ReportsModule() {
         .select(`
           *,
           reporter:reporter_id (full_name, district),
-          reported:reported_id (full_name, district, bio, photos, gender, date_of_birth, created_at)
+          reported:reported_id (full_name, district, bio, photos, gender, date_of_birth, created_at, is_active)
         `);
 
       if (error) throw error;
@@ -127,7 +134,9 @@ export default function ReportsModule() {
           created_at: r.created_at,
           reviewed_at: r.reviewed_at || null,
           severity,
-          reportCountAgainstUser: count
+          reportCountAgainstUser: count,
+          reported_dob: reported.date_of_birth || '',
+          reported_is_active: reported.is_active !== false
         };
       });
 
@@ -144,6 +153,17 @@ export default function ReportsModule() {
     fetchReports();
   }, []);
 
+  // Read search parameters for initial tab
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam && ['all', 'unreviewed', 'help_tickets', 'investigating', 'resolved', 'dismissed'].includes(tabParam)) {
+        setActiveTab(tabParam as any);
+      }
+    }
+  }, []);
+
   // Filter search and sort
   useEffect(() => {
     let result = [...reports];
@@ -151,6 +171,8 @@ export default function ReportsModule() {
     // Filter tabs
     if (activeTab === 'unreviewed') {
       result = result.filter(r => !r.is_reviewed);
+    } else if (activeTab === 'help_tickets') {
+      result = result.filter(r => r.reporter_id === r.reported_id);
     } else if (activeTab === 'investigating') {
       result = result.filter(r => r.is_reviewed && r.action_taken === 'investigating');
     } else if (activeTab === 'resolved') {
@@ -193,6 +215,9 @@ export default function ReportsModule() {
   const handleOpenReport = async (report: ReportItem) => {
     setSelectedReport(report);
     setActionNotes('');
+    setEditName(report.reported_name || '');
+    setEditDistrict(report.reported_district || '');
+    setEditDOB(report.reported_dob || '');
     setShowDrawer(true);
 
     // Fetch Accused History
@@ -384,6 +409,207 @@ export default function ReportsModule() {
     }
   };
 
+  const handleUpdateName = async () => {
+    if (!selectedReport || !editName.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ full_name: editName.trim() })
+        .eq('id', selectedReport.reported_id);
+
+      if (error) throw error;
+      
+      triggerToast('User legal name updated successfully!', 'success');
+      
+      // Update local report display state
+      setSelectedReport(prev => prev ? { ...prev, reported_name: editName.trim() } : null);
+      setReports(prev => prev.map(r => r.reported_id === selectedReport.reported_id ? { ...r, reported_name: editName.trim() } : r));
+      
+      await addAuditLog('ADMIN_EDIT_NAME', selectedReport.reported_id, editName.trim(), `Corrected spelling/name from Help Ticket to: ${editName.trim()}`);
+    } catch (e: any) {
+      console.error(e);
+      triggerToast(e.message || 'Failed to update name.', 'error');
+    }
+  };
+
+  const handleUpdateDistrict = async () => {
+    if (!selectedReport || !editDistrict.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ district: editDistrict.trim() })
+        .eq('id', selectedReport.reported_id);
+
+      if (error) throw error;
+      
+      triggerToast('User district updated successfully!', 'success');
+      
+      // Update local state
+      setSelectedReport(prev => prev ? { ...prev, reported_district: editDistrict.trim() } : null);
+      setReports(prev => prev.map(r => r.reported_id === selectedReport.reported_id ? { ...r, reported_district: editDistrict.trim() } : r));
+
+      await addAuditLog('ADMIN_EDIT_DISTRICT', selectedReport.reported_id, selectedReport.reported_name, `Updated district from Help Ticket to: ${editDistrict.trim()}`);
+    } catch (e: any) {
+      console.error(e);
+      triggerToast(e.message || 'Failed to update district.', 'error');
+    }
+  };
+
+  const handleUpdateDOB = async () => {
+    if (!selectedReport || !editDOB.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ date_of_birth: editDOB.trim() })
+        .eq('id', selectedReport.reported_id);
+
+      if (error) throw error;
+      
+      triggerToast('User Date of Birth updated successfully!', 'success');
+      
+      // Update local state
+      setSelectedReport(prev => prev ? { ...prev, reported_dob: editDOB.trim() } : null);
+      setReports(prev => prev.map(r => r.reported_id === selectedReport.reported_id ? { ...r, reported_dob: editDOB.trim() } : r));
+
+      await addAuditLog('ADMIN_EDIT_DOB', selectedReport.reported_id, selectedReport.reported_name, `Corrected Date of Birth from Help Ticket to: ${editDOB.trim()}`);
+    } catch (e: any) {
+      console.error(e);
+      triggerToast(e.message || 'Failed to update Date of Birth.', 'error');
+    }
+  };
+
+  const handleToggleActiveStatus = async () => {
+    if (!selectedReport) return;
+    const newActiveState = !selectedReport.reported_is_active;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: newActiveState })
+        .eq('id', selectedReport.reported_id);
+
+      if (error) throw error;
+      
+      triggerToast(`Account status set to ${newActiveState ? 'Active' : 'Inactive'}!`, 'success');
+      
+      // Update local state
+      setSelectedReport(prev => prev ? { ...prev, reported_is_active: newActiveState } : null);
+      setReports(prev => prev.map(r => r.reported_id === selectedReport.reported_id ? { ...r, reported_is_active: newActiveState } : r));
+
+      await addAuditLog('ADMIN_TOGGLE_ACTIVE', selectedReport.reported_id, selectedReport.reported_name, `Toggled account is_active to: ${newActiveState}`);
+    } catch (e: any) {
+      console.error(e);
+      triggerToast(e.message || 'Failed to toggle active status.', 'error');
+    }
+  };
+
+  const handleRejectOrResetVerification = async () => {
+    if (!selectedReport) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          verification_status: 'rejected', 
+          rejection_reason: 'Verification reset by admin via Help Desk. Please resubmit valid identity documents.' 
+        })
+        .eq('id', selectedReport.reported_id);
+
+      if (error) throw error;
+      
+      triggerToast('Verification reset to Rejected. User can now resubmit documents.', 'success');
+      
+      await addAuditLog('ADMIN_RESET_VERIFICATION', selectedReport.reported_id, selectedReport.reported_name, `Reset verification status to rejected/resubmit via Help Ticket.`);
+      fetchReports();
+    } catch (e: any) {
+      console.error(e);
+      triggerToast(e.message || 'Failed to reset verification status.', 'error');
+    }
+  };
+
+  const handleForceVerify = async () => {
+    if (!selectedReport) return;
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ verification_status: 'verified', verified_at: new Date().toISOString() })
+        .eq('id', selectedReport.reported_id);
+
+      if (error) throw error;
+      
+      triggerToast('User account verified successfully!', 'success');
+      
+      // Update local state
+      setSelectedReport(prev => prev ? { ...prev, severity: 'low' } : null);
+      
+      await addAuditLog('ADMIN_FORCE_VERIFY', selectedReport.reported_id, selectedReport.reported_name, `Force-verified user account verification status from Help Ticket.`);
+      fetchReports();
+    } catch (e: any) {
+      console.error(e);
+      triggerToast(e.message || 'Failed to verify account.', 'error');
+    }
+  };
+
+  const handleDeleteProfile = async () => {
+    if (!selectedReport) return;
+    const confirmDelete = window.confirm(`Are you absolutely sure you want to permanently delete profile for ${selectedReport.reported_name}? This cannot be undone.`);
+    if (!confirmDelete) return;
+
+    try {
+      // First delete profile in public.profiles. Row cascade deletes matches/likes/messages.
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', selectedReport.reported_id);
+
+      if (error) throw error;
+      
+      triggerToast('Profile permanently deleted from platform.', 'success');
+      setShowDrawer(false);
+      setSelectedReport(null);
+      
+      await addAuditLog('ADMIN_DELETE_USER', selectedReport.reported_id, selectedReport.reported_name, `Permanently deleted user profile and data upon Help Ticket request.`);
+      fetchReports();
+    } catch (e: any) {
+      console.error(e);
+      triggerToast(e.message || 'Failed to delete profile.', 'error');
+    }
+  };
+
+  const handleResolveHelpTicket = async () => {
+    if (!selectedReport || !admin) return;
+    try {
+      const now = new Date().toISOString();
+      const resolution = actionNotes.trim() || 'Help ticket resolved and closed by moderator.';
+
+      const { error } = await supabase
+        .from('reports')
+        .update({
+          is_reviewed: true,
+          reviewed_by: admin.email,
+          action_taken: 'resolved_help_ticket',
+          reviewed_at: now,
+          description: selectedReport.description + `\n\n[RESOLUTION BY ${admin.email}]: ${resolution}`
+        })
+        .eq('id', selectedReport.id);
+
+      if (error) throw error;
+
+      await addAuditLog(
+        'HELP_TICKET_RESOLVED',
+        selectedReport.reported_id,
+        selectedReport.reported_name,
+        `Resolved support ticket ID ${selectedReport.id}. Resolution: ${resolution}`
+      );
+
+      triggerToast('Help ticket resolved and closed!', 'success');
+      setShowDrawer(false);
+      setSelectedReport(null);
+      fetchReports();
+    } catch (e) {
+      console.error(e);
+      triggerToast('Failed to close help ticket.', 'error');
+    }
+  };
+
   return (
     <div className={styles.container}>
       {toast && (
@@ -406,6 +632,7 @@ export default function ReportsModule() {
           {[
             { id: 'all', label: 'All Reports', count: reports.length },
             { id: 'unreviewed', label: 'Unreviewed', count: reports.filter(r => !r.is_reviewed).length },
+            { id: 'help_tickets', label: 'Help Tickets ✉️', count: reports.filter(r => r.reporter_id === r.reported_id && !r.is_reviewed).length },
             { id: 'investigating', label: 'Under Investigation', count: reports.filter(r => r.is_reviewed && r.action_taken === 'investigating').length },
             { id: 'resolved', label: 'Resolved Actions', count: reports.filter(r => r.is_reviewed && r.action_taken !== 'dismissed' && r.action_taken !== 'investigating').length },
             { id: 'dismissed', label: 'Dismissed', count: reports.filter(r => r.is_reviewed && r.action_taken === 'dismissed').length }
@@ -491,9 +718,21 @@ export default function ReportsModule() {
                         onChange={() => handleSelectToggle(report.id)}
                       />
                     </td>
-                    <td>{report.reporter_name}</td>
+                    <td>{report.reporter_id === report.reported_id ? 'Self (Help Desk)' : report.reporter_name}</td>
                     <td><b>{report.reported_name}</b></td>
-                    <td className={styles.reasonBadge}>{report.reason.replace('_', ' ').toUpperCase()}</td>
+                    <td>
+                      {report.reporter_id === report.reported_id ? (
+                        <span className={styles.reasonBadge} style={{ 
+                          backgroundColor: 'rgba(184, 134, 11, 0.15)', 
+                          color: '#B8860B', 
+                          borderColor: 'rgba(184, 134, 11, 0.3)' 
+                        }}>
+                          SUPPORT TICKET
+                        </span>
+                      ) : (
+                        <span className={styles.reasonBadge}>{report.reason.replace('_', ' ').toUpperCase()}</span>
+                      )}
+                    </td>
                     <td>{new Date(report.created_at).toLocaleDateString()}</td>
                     <td>
                       <span className={`${styles.severityBadge} ${
@@ -679,6 +918,127 @@ export default function ReportsModule() {
                     </button>
                   </div>
                 </div>
+
+                {selectedReport.reporter_id === selectedReport.reported_id && (
+                  <div className={styles.actionsCard} style={{ marginTop: '20px', borderTop: '4px solid var(--secondary, #B8860B)' }}>
+                    <h4 style={{ color: '#B8860B', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      ⚙️ Help Desk Ticket Actions
+                    </h4>
+                    <p style={{ fontSize: '0.8rem', color: '#888888', marginBottom: '16px', lineHeight: '1.4' }}>
+                      This request was submitted via Help & Support. Use these controls to directly update this user's account details.
+                    </p>
+
+                    <div className={styles.formGroup} style={{ marginBottom: '16px' }}>
+                      <label className={styles.label} style={{ fontSize: '0.75rem', fontWeight: 700 }}>Correct Legal Full Name</label>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                        <input
+                          type="text"
+                          className={styles.actionTextarea}
+                          style={{ height: '36px', padding: '0 12px', background: '#0F0F0F', border: '1px solid #2A2A2A', borderRadius: '4px', color: '#FFF', flex: 1 }}
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          className={styles.btnActionInvestigate}
+                          style={{ padding: '0 14px', borderRadius: '4px', cursor: 'pointer', height: '36px' }}
+                          onClick={handleUpdateName}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={styles.formGroup} style={{ marginBottom: '16px' }}>
+                      <label className={styles.label} style={{ fontSize: '0.75rem', fontWeight: 700 }}>Change Home District</label>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                        <input
+                          type="text"
+                          className={styles.actionTextarea}
+                          style={{ height: '36px', padding: '0 12px', background: '#0F0F0F', border: '1px solid #2A2A2A', borderRadius: '4px', color: '#FFF', flex: 1 }}
+                          value={editDistrict}
+                          onChange={(e) => setEditDistrict(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          className={styles.btnActionInvestigate}
+                          style={{ padding: '0 14px', borderRadius: '4px', cursor: 'pointer', height: '36px' }}
+                          onClick={handleUpdateDistrict}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={styles.formGroup} style={{ marginBottom: '16px' }}>
+                      <label className={styles.label} style={{ fontSize: '0.75rem', fontWeight: 700 }}>Correct Legal Date of Birth</label>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                        <input
+                          type="date"
+                          className={styles.actionTextarea}
+                          style={{ height: '36px', padding: '0 12px', background: '#0F0F0F', border: '1px solid #2A2A2A', borderRadius: '4px', color: '#FFF', flex: 1 }}
+                          value={editDOB}
+                          onChange={(e) => setEditDOB(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          className={styles.btnActionInvestigate}
+                          style={{ padding: '0 14px', borderRadius: '4px', cursor: 'pointer', height: '36px' }}
+                          onClick={handleUpdateDOB}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+                      <button
+                        type="button"
+                        className={styles.btnActionWarn}
+                        style={{ background: '#4A7C59', color: '#FFF', padding: '12px', borderRadius: '6px', cursor: 'pointer', border: 'none', fontWeight: 600 }}
+                        onClick={handleForceVerify}
+                      >
+                        ✓ Force-Verify Account Status
+                      </button>
+
+                      <button
+                        type="button"
+                        className={styles.btnActionWarn}
+                        style={{ background: '#D35400', color: '#FFF', padding: '12px', borderRadius: '6px', cursor: 'pointer', border: 'none', fontWeight: 600 }}
+                        onClick={handleRejectOrResetVerification}
+                      >
+                        ↻ Reset Verification (Allow Resubmit ID)
+                      </button>
+
+                      <button
+                        type="button"
+                        className={styles.btnActionInvestigate}
+                        style={{ padding: '12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                        onClick={handleToggleActiveStatus}
+                      >
+                        {selectedReport.reported_is_active ? '⏸ Pause Profile (Set Inactive)' : '▶ Resume Profile (Set Active)'}
+                      </button>
+                      
+                      <button
+                        type="button"
+                        className={styles.btnActionBan}
+                        style={{ padding: '12px', borderRadius: '6px', cursor: 'pointer' }}
+                        onClick={handleDeleteProfile}
+                      >
+                        ✗ Permanently Delete Profile & Data
+                      </button>
+
+                      <button
+                        type="button"
+                        className={styles.btnActionDismiss}
+                        style={{ background: '#B8860B', color: '#0F0F0F', padding: '14px', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, border: 'none', marginTop: '6px' }}
+                        onClick={handleResolveHelpTicket}
+                      >
+                        Resolve & Close Help Ticket 🏁
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

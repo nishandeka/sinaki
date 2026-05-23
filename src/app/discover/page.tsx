@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import TopBar from '@/components/TopBar';
 import { supabase } from '@/lib/supabase';
@@ -38,11 +39,12 @@ const ASSAMESE_COMMUNITIES = [
 ];
 
 export default function DiscoverPage() {
+  const router = useRouter();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [matches, setMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [currentUserProfile, setCurrentUserProfile] = useState<Profile | null>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Swipe overlay feedback
@@ -180,6 +182,10 @@ export default function DiscoverPage() {
   useEffect(() => {
     const fetchUserAndData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.replace('/login');
+        return;
+      }
       setCurrentUser(user);
 
       if (user) {
@@ -190,7 +196,16 @@ export default function DiscoverPage() {
           .eq('id', user.id)
           .single();
 
-        setCurrentUserProfile(myProfile);
+        if (myProfile) {
+          if (myProfile.verification_status !== 'verified') {
+            router.replace('/check-status');
+            return;
+          }
+          setCurrentUserProfile(myProfile);
+        } else {
+          router.replace('/onboarding/basics');
+          return;
+        }
 
         if (myProfile) {
           // Fetch already liked profiles

@@ -362,15 +362,24 @@ export default function ChatPage() {
     const setupChat = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!active) return;
+      if (!user) {
+        router.replace('/login');
+        return;
+      }
       setCurrentUser(user);
 
       if (user) {
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('full_name, avatar_url, photos')
+          .select('full_name, avatar_url, photos, verification_status')
           .eq('id', user.id)
           .single();
+        
         if (active && profileData) {
+          if (profileData.verification_status !== 'verified') {
+            router.replace('/check-status');
+            return;
+          }
           setCurrentUserProfile(profileData);
         }
       }

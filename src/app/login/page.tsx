@@ -44,16 +44,24 @@ export default function LoginPage() {
       return;
     }
 
-    // Check if profile exists
+    // Check if profile exists and check verification status
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, verification_status')
         .eq('id', user.id)
         .maybeSingle();
 
-      router.replace(profile ? '/discover' : '/onboarding/basics');
+      if (profile) {
+        if (profile.verification_status === 'verified') {
+          router.replace('/discover');
+        } else {
+          router.replace('/check-status');
+        }
+      } else {
+        router.replace('/onboarding/basics');
+      }
     }
   };
 
