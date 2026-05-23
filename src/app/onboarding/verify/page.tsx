@@ -378,6 +378,19 @@ export default function VerifyPage() {
 
       if (profileError) throw profileError;
 
+      // Create a pending record in verification_queue so it is visible in the admin portal
+      const { error: queueError } = await supabase
+        .from('verification_queue')
+        .insert({
+          profile_id: userId,
+          id_card_url: idCardUrl,
+          id_card_type: idCardType,
+          selfie_url: selfieUrl,
+          status: 'pending'
+        });
+
+      if (queueError) throw queueError;
+
       setIsSubmitted(true);
     } catch (err: any) {
       setError(err.message || 'Failed to save verification details.');
