@@ -49,11 +49,17 @@ export default function AdminLayout({
 
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const authCheckedRef = useRef(false);
 
-  // Check login and fetch admin status
+  // Check login and fetch admin status — runs ONCE on mount only
   useEffect(() => {
     if (pathname === '/admin/login') {
       setLoading(false);
+      return;
+    }
+
+    // If we already verified the admin session, don't re-check on every route change
+    if (authCheckedRef.current && admin) {
       return;
     }
 
@@ -81,6 +87,7 @@ export default function AdminLayout({
 
         setAdmin(adminData);
         setLoading(false);
+        authCheckedRef.current = true;
         
         // Setup inactivity timer and realtime subscriptions
         resetInactivityTimer();
@@ -229,6 +236,7 @@ export default function AdminLayout({
     await addAuditLog('ADMIN_LOGOUT', undefined, undefined, 'Admin logged out manually or by session inactivity');
     await supabase.auth.signOut();
     setAdmin(null);
+    authCheckedRef.current = false;
     setShowWarningModal(false);
     router.replace('/admin/login');
   };
