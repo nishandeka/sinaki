@@ -18,6 +18,7 @@ export default function BasicsPage() {
     phone: '',
     dob: '',
     gender: '', // 'male' or 'female'
+    religion: '',
   });
 
   useEffect(() => {
@@ -29,15 +30,16 @@ export default function BasicsPage() {
       }
       setUserEmail(user.email || '');
       
-      // Try to pre-fill from Google metadata if present
+      // Try to pre-fill from Google/signup metadata if present
       const googleName = user.user_metadata?.full_name || user.user_metadata?.name || '';
-      if (googleName) {
-        setFormData(prev => ({
-          ...prev,
-          fullName: googleName,
-          displayName: googleName.split(' ')[0],
-        }));
-      }
+      const initialReligion = user.user_metadata?.religion || '';
+      
+      setFormData(prev => ({
+        ...prev,
+        fullName: googleName || prev.fullName,
+        displayName: googleName ? googleName.split(' ')[0] : prev.displayName,
+        religion: initialReligion || prev.religion,
+      }));
     };
     checkAuth();
   }, [router]);
@@ -99,6 +101,7 @@ export default function BasicsPage() {
           date_of_birth: formData.dob,
           district: 'Kamrup Metropolitan', // temporary placeholder, updated in verify step
           is_profile_complete: false,
+          religion: formData.religion || 'prefer_not_to_say',
         }, { onConflict: 'id' });
 
       if (profileError) throw profileError;
@@ -179,6 +182,32 @@ export default function BasicsPage() {
               </div>
             )}
           </div>
+        </div>
+
+        <div className={styles.grid}>
+          <div className={styles.inputGroup}>
+            <label htmlFor="religion" className="label-md">Religion</label>
+            <select
+              id="religion"
+              className={styles.input}
+              value={formData.religion}
+              onChange={(e) => setFormData(prev => ({ ...prev, religion: e.target.value }))}
+              required
+              style={{ width: '100%' }}
+            >
+              <option value="">Select your religion</option>
+              <option value="hindu">Hindu</option>
+              <option value="muslim">Muslim</option>
+              <option value="christian">Christian</option>
+              <option value="buddhist">Buddhist</option>
+              <option value="sikh">Sikh</option>
+              <option value="jain">Jain</option>
+              <option value="tribal_religion">Tribal Religion</option>
+              <option value="other">Other</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
+          </div>
+          <div className={styles.inputGroup} />
         </div>
 
         <div className={styles.inputGroup}>

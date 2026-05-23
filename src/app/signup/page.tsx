@@ -18,6 +18,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [religion, setReligion] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +44,11 @@ export default function SignupPage() {
       return;
     }
 
+    if (!religion) {
+      setError('Please select your religion.');
+      return;
+    }
+
     setLoading(true);
 
     const { data, error: authError } = await supabase.auth.signUp({
@@ -50,6 +56,9 @@ export default function SignupPage() {
       password,
       options: {
         emailRedirectTo: undefined,
+        data: {
+          religion: religion,
+        }
       },
     });
 
@@ -139,6 +148,29 @@ export default function SignupPage() {
               minLength={8}
               autoComplete="new-password"
             />
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label htmlFor="signup-religion" className="label-md">Religion</label>
+            <select
+              id="signup-religion"
+              className={styles.input}
+              value={religion}
+              onChange={(e) => setReligion(e.target.value)}
+              required
+              style={{ width: '100%' }}
+            >
+              <option value="">Select your religion</option>
+              <option value="hindu">Hindu</option>
+              <option value="muslim">Muslim</option>
+              <option value="christian">Christian</option>
+              <option value="buddhist">Buddhist</option>
+              <option value="sikh">Sikh</option>
+              <option value="jain">Jain</option>
+              <option value="tribal_religion">Tribal Religion</option>
+              <option value="other">Other</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
           </div>
 
           <button
