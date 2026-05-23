@@ -47,11 +47,11 @@ export default function VerificationQueue() {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [checklist, setChecklist] = useState({
-    faceMatches: false,
-    nameMatches: false,
-    age18Plus: false,
-    idGenuine: false,
-    selfieLive: false
+    faceMatches: true,
+    nameMatches: true,
+    age18Plus: true,
+    idGenuine: true,
+    selfieLive: true
   });
 
   // Rejection Form
@@ -195,11 +195,11 @@ export default function VerificationQueue() {
     setZoomLevel(1);
     setRotation(0);
     setChecklist({
-      faceMatches: false,
-      nameMatches: false,
-      age18Plus: false,
-      idGenuine: false,
-      selfieLive: false
+      faceMatches: true,
+      nameMatches: true,
+      age18Plus: true,
+      idGenuine: true,
+      selfieLive: true
     });
     setShowRejectForm(false);
     setRejectNotes('');
