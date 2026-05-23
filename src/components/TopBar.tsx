@@ -98,6 +98,14 @@ export default function TopBar() {
 
   const fetchNotifications = async (userId: string) => {
     try {
+      // Fetch current user's religion
+      const { data: myProfile } = await supabase
+        .from('profiles')
+        .select('religion')
+        .eq('id', userId)
+        .single();
+      const myReligion = myProfile?.religion || 'prefer_not_to_say';
+
       // 1. Fetch Likes
       const { data: myLikes } = await supabase
         .from('likes')
@@ -122,7 +130,10 @@ export default function TopBar() {
         .eq('liked_id', userId);
 
       const filteredLikes = (receivedLikes || [])
-        .filter(item => item.liker && !likedIds.has(item.liker_id) && !passedIds.has(item.liker_id))
+        .filter(item => item.liker && 
+                        !likedIds.has(item.liker_id) && 
+                        !passedIds.has(item.liker_id) &&
+                        (item.liker as any).religion === myReligion)
         .map(item => ({
           id: item.id,
           likerId: item.liker_id,

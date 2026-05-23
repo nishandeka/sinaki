@@ -207,11 +207,12 @@ export default function DiscoverPage() {
             .eq('passer_id', user.id);
           const passedIds = (passedData || []).map(p => p.passed_id);
 
-          // Fetch profiles matching target gender and not yet swiped
+          // Fetch profiles matching target gender, same religion, and not yet swiped
           const { data: profileData } = await supabase
             .from('profiles')
             .select('*')
             .eq('gender', myProfile.interested_in)
+            .eq('religion', myProfile.religion)
             .eq('is_profile_complete', true)
             .eq('is_active', true);
 
