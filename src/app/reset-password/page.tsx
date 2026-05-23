@@ -65,7 +65,9 @@ export default function ResetPasswordPage() {
     <div className={styles.wrapper}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <Link href="/" className={styles.logo}>Sinaki</Link>
+          <Link href="/" className={styles.logoLink}>
+            <img src="/logo.png" alt="Sinaki Logo" className={styles.logoImage} />
+          </Link>
           <h1 className="headline-lg">Choose New Password</h1>
           <p className="body-md">Create a secure new password for your account.</p>
         </div>

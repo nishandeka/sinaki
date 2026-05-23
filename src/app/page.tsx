@@ -108,8 +108,10 @@ export default function LandingPage() {
         <div className={styles.container}>
           <div className={styles.footerGrid}>
             <div>
-              <h3 className={`${styles.footerLogo} text-gradient`}>Sinaki</h3>
-              <p className="body-sm" style={{color: 'var(--on-surface-variant)'}}>Find your someone, the Assamese way.</p>
+              <div className={styles.footerLogoContainer}>
+                <img src="/logo.png" alt="Sinaki Logo" className={styles.footerLogoImage} />
+              </div>
+              <p className="body-sm" style={{color: 'var(--on-surface-variant)', marginTop: 'var(--space-xs)'}}>Find your someone, the Assamese way.</p>
             </div>
             <div className={styles.footerLinks}>
               <Link href="/about">About</Link>

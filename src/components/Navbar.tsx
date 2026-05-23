@@ -5,8 +5,8 @@ export default function Navbar() {
   return (
     <nav className={styles.navbar}>
       <div className={styles.container}>
-        <Link href="/" className={`${styles.logo} text-gradient`}>
-          Sinaki.
+        <Link href="/" className={styles.logoLink}>
+          <img src="/logo.png" alt="Sinaki Logo" className={styles.logoImage} />
         </Link>
         <div className={styles.links}>
           <Link href="/login" className={styles.loginLink}>

@@ -48,7 +48,9 @@ export default function ForgotPasswordPage() {
     <div className={styles.wrapper}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <Link href="/" className={styles.logo}>Sinaki</Link>
+          <Link href="/" className={styles.logoLink}>
+            <img src="/logo.png" alt="Sinaki Logo" className={styles.logoImage} />
+          </Link>
           <h1 className="headline-lg">Reset Password</h1>
           <p className="body-md">Enter your email to receive a recovery link.</p>
         </div>

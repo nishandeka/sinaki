@@ -24,14 +24,24 @@
   margin-bottom: var(--space-2xl);
 }
 
-.logo {
-  font-family: var(--font-noto-serif);
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--primary);
+.logoLink {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
   text-decoration: none;
-  display: block;
   margin-bottom: var(--space-md);
+  width: 100%;
+}
+
+.logoImage {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logoLink:hover .logoImage {
+  transform: scale(1.05);
 }
 
 .header h1 {

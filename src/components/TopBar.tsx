@@ -404,7 +404,9 @@ export default function TopBar() {
     <>
       <div className={styles.topBar}>
         <div className={styles.container}>
-          <Link href="/discover" className={styles.logo}>Sinaki</Link>
+          <Link href="/discover" className={styles.logoLink}>
+            <img src="/logo.png" alt="Sinaki Logo" className={styles.logoImage} />
+          </Link>
           <div className={styles.actions}>
             <Link href="/chat" className={styles.iconLink} title="Matches & Chats">
               <span className={styles.icon}>💌</span>

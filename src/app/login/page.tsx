@@ -61,7 +61,9 @@ export default function LoginPage() {
     <div className={styles.wrapper}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <Link href="/" className={styles.logo}>Sinaki</Link>
+          <Link href="/" className={styles.logoLink}>
+            <img src="/logo.png" alt="Sinaki Logo" className={styles.logoImage} />
+          </Link>
           <h1 className="headline-lg">Welcome Back</h1>
           <p className="body-md">Sign in to find your campus match.</p>
         </div>

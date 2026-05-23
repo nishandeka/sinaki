@@ -210,11 +210,16 @@
   margin-bottom: 60px;
 }
 
-.footerLogo {
-  font-family: var(--font-playfair), serif;
-  font-size: 2.2rem;
-  font-weight: 800;
+.footerLogoContainer {
+  display: flex;
+  align-items: center;
   margin-bottom: var(--space-xs);
+}
+
+.footerLogoImage {
+  height: 50px;
+  width: auto;
+  object-fit: contain;
 }
 
 .footerLinks {

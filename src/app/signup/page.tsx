@@ -86,7 +86,9 @@ export default function SignupPage() {
     <div className={styles.wrapper}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <Link href="/" className={styles.logo} style={{ fontFamily: 'var(--font-playfair)' }}>sinaki</Link>
+          <Link href="/" className={styles.logoLink}>
+            <img src="/logo.png" alt="Sinaki Logo" className={styles.logoImage} />
+          </Link>
           <h1 className="headline-lg" style={{ fontFamily: 'var(--font-playfair)', fontWeight: 700 }}>Join Sinaki</h1>
           <p className="body-md">Find your someone, the warm Assamese way.</p>
         </div>

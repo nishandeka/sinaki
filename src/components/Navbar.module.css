@@ -24,12 +24,21 @@
   align-items: center;
 }
 
-.logo {
-  font-family: var(--font-playfair);
-  font-size: 1.8rem;
-  font-weight: 700;
+.logoLink {
+  display: flex;
+  align-items: center;
   text-decoration: none;
-  letter-spacing: -0.04em;
+}
+
+.logoImage {
+  height: 45px;
+  width: auto;
+  object-fit: contain;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logoLink:hover .logoImage {
+  transform: scale(1.05);
 }
 
 .links {
